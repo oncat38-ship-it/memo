@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>マルチ機能 ユーティリティ Web App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>モバイル ユーティリティ Web App</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -12,418 +12,311 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- JsBarcode -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-    <!-- Custom styling & font -->
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
+        
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         .code-font {
             font-family: 'JetBrains Mono', monospace;
         }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        /* Hide scrollbars for clean mobile feel */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 9999px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: #475569;
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col justify-between select-none">
 
-    <div class="flex h-screen overflow-hidden">
-
-        <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col z-10 transition-all duration-200">
-            <!-- App Header -->
-            <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="p-2 bg-indigo-600 text-white rounded-lg shadow-md">
-                        <i data-lucide="layers" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-lg leading-tight">Multi-Desk</h1>
-                        <span class="text-xs text-slate-500 dark:text-slate-400">All-in-One Utility</span>
-                    </div>
-                </div>
+    <!-- Top Header -->
+    <header class="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <div class="p-1.5 bg-indigo-600 text-white rounded-lg shadow-sm">
+                <i data-lucide="smartphone" class="w-5 h-5"></i>
             </div>
+            <h1 class="font-bold text-base tracking-tight" id="header-title">メモ帳</h1>
+        </div>
+        <button onclick="toggleDarkMode()" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition">
+            <i data-lucide="sun" class="w-4 h-4 dark:hidden"></i>
+            <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
+        </button>
+    </header>
 
-            <!-- Nav Links -->
-            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-                <button onclick="switchTab('memo')" id="nav-memo" class="nav-btn active flex items-center space-x-3 w-full px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150">
-                    <i data-lucide="file-text" class="w-5 h-5"></i>
-                    <span>メモ帳</span>
-                </button>
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto pb-24 px-4 pt-4 max-w-md mx-auto w-full">
 
-                <button onclick="switchTab('converter')" id="nav-converter" class="nav-btn flex items-center space-x-3 w-full px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-                    <i data-lucide="file-code" class="w-5 h-5"></i>
-                    <span>テキスト・ファイル変換</span>
-                </button>
-
-                <button onclick="switchTab('vault')" id="nav-vault" class="nav-btn flex items-center space-x-3 w-full px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-                    <i data-lucide="key-round" class="w-5 h-5"></i>
-                    <span>キー＆短文保管庫</span>
-                </button>
-
-                <button onclick="switchTab('image')" id="nav-image" class="nav-btn flex items-center space-x-3 w-full px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-                    <i data-lucide="image" class="w-5 h-5"></i>
-                    <span>画像加工・変換</span>
-                </button>
-
-                <button onclick="switchTab('code')" id="nav-code" class="nav-btn flex items-center space-x-3 w-full px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-                    <i data-lucide="qr-code" class="w-5 h-5"></i>
-                    <span>コード生成 (QR/バーコード)</span>
-                </button>
-            </nav>
-
-            <!-- Bottom Theme Switcher -->
-            <div class="p-4 border-t border-slate-200 dark:border-slate-700">
-                <button onclick="toggleDarkMode()" class="flex items-center justify-between w-full px-3.5 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
-                    <span class="flex items-center space-x-2">
-                        <i data-lucide="sun" class="w-4 h-4 dark:hidden"></i>
-                        <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
-                        <span id="theme-label">ライトモード</span>
-                    </span>
-                    <span class="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded">切替</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 dark:bg-slate-900">
-            
-            <!-- 1. MEMO TAB -->
-            <section id="tab-memo" class="tab-content flex-1 flex flex-col h-full p-6 overflow-hidden">
-                <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                    <div>
-                        <h2 class="text-xl font-bold">純粋メモ帳</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">ブラウザに自動保存されます。お好みの形式でダウンロード可能です。</p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span id="memo-char-count" class="text-xs text-slate-500 mr-2">0 文字</span>
-                        <select id="memo-export-ext" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-xs px-2.5 py-1.5 focus:outline-none">
-                            <option value="txt">.txt (テキスト)</option>
-                            <option value="md">.md (Markdown)</option>
-                            <option value="csv">.csv (テキスト)</option>
-                            <option value="json">.json (JSON化)</option>
-                            <option value="html">.html (HTML化)</option>
-                        </select>
-                        <button onclick="downloadMemo()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3.5 py-1.5 rounded-lg flex items-center space-x-1 shadow-sm transition">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                            <span>保存</span>
-                        </button>
-                        <button onclick="clearMemo()" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium px-3 py-1.5 rounded-lg transition">
-                            クリア
-                        </button>
-                    </div>
-                </div>
-                <div class="flex-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 flex flex-col">
-                    <input type="text" id="memo-title" placeholder="メモのタイトル..." class="w-full text-lg font-bold bg-transparent border-b border-slate-200 dark:border-slate-700 pb-2 mb-3 focus:outline-none focus:border-indigo-500 transition">
-                    <textarea id="memo-content" placeholder="自由にメモを入力してください..." class="w-full flex-1 bg-transparent resize-none focus:outline-none code-font text-sm leading-relaxed" oninput="updateMemoStats()"></textarea>
-                </div>
-            </section>
-
-            <!-- 2. CONVERTER TAB -->
-            <section id="tab-converter" class="tab-content hidden flex-1 flex flex-col h-full p-6 overflow-y-auto">
-                <div class="mb-4">
-                    <h2 class="text-xl font-bold">テキスト & ファイル変換</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">テキストデータやCSV、JSONなどの相互変換とエクスポートを行います。</p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
-                    <!-- Source Input -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col shadow-sm">
-                        <div class="flex justify-between items-center mb-3">
-                            <label class="text-sm font-semibold flex items-center space-x-1.5">
-                                <i data-lucide="file-input" class="w-4 h-4 text-indigo-500"></i>
-                                <span>入力データ</span>
-                            </label>
-                            <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs px-2.5 py-1 rounded-md transition flex items-center space-x-1">
-                                <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
-                                <span>ファイル読み込み</span>
-                                <input type="file" id="converter-file-input" class="hidden" onchange="handleFileUpload(event)">
-                            </label>
-                        </div>
-                        <textarea id="converter-input" placeholder="ここにテキストを貼り付けるか、上のボタンからファイル(TXT, CSV, JSON等)を読み込んでください..." class="w-full flex-1 min-h-[300px] p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 code-font text-xs"></textarea>
-                    </div>
-
-                    <!-- Output & Controls -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col shadow-sm">
-                        <div class="flex justify-between items-center mb-3">
-                            <label class="text-sm font-semibold flex items-center space-x-1.5">
-                                <i data-lucide="file-output" class="w-4 h-4 text-indigo-500"></i>
-                                <span>変換設定 & 出力</span>
-                            </label>
-                        </div>
-
-                        <!-- Action Bar -->
-                        <div class="grid grid-cols-2 gap-2 mb-3">
-                            <button onclick="convertData('json-to-csv')" class="bg-slate-100 hover:bg-indigo-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-600 font-medium text-left flex items-center justify-between">
-                                <span>JSON ➔ CSV 変換</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
-                            </button>
-                            <button onclick="convertData('csv-to-json')" class="bg-slate-100 hover:bg-indigo-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-600 font-medium text-left flex items-center justify-between">
-                                <span>CSV ➔ JSON 変換</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
-                            </button>
-                            <button onclick="convertData('encode-base64')" class="bg-slate-100 hover:bg-indigo-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-600 font-medium text-left flex items-center justify-between">
-                                <span>Base64 エンコード</span>
-                                <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i>
-                            </button>
-                            <button onclick="convertData('decode-base64')" class="bg-slate-100 hover:bg-indigo-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-600 font-medium text-left flex items-center justify-between">
-                                <span>Base64 デコード</span>
-                                <i data-lucide="unlock" class="w-3.5 h-3.5 text-slate-400"></i>
-                            </button>
-                        </div>
-
-                        <textarea id="converter-output" readonly placeholder="変換結果がここに表示されます..." class="w-full flex-1 min-h-[220px] p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none code-font text-xs mb-3"></textarea>
-
-                        <!-- Download Bar -->
-                        <div class="flex items-center space-x-2">
-                            <input type="text" id="converter-filename" value="converted_file" placeholder="ファイル名" class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs px-3 py-1.5 focus:outline-none">
-                            <select id="converter-ext" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs px-2.5 py-1.5 focus:outline-none">
-                                <option value="txt">.txt</option>
-                                <option value="csv">.csv</option>
-                                <option value="json">.json</option>
-                                <option value="md">.md</option>
-                                <option value="xml">.xml</option>
-                                <option value="html">.html</option>
-                            </select>
-                            <button onclick="downloadConvertedFile()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-1.5 rounded-lg flex items-center space-x-1 shadow-sm transition">
-                                <i data-lucide="download" class="w-4 h-4"></i>
-                                <span>出力</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 3. VAULT TAB -->
-            <section id="tab-vault" class="tab-content hidden flex-1 flex flex-col h-full p-6 overflow-y-auto">
-                <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                    <div>
-                        <h2 class="text-xl font-bold">キー & 短文簡易保管庫</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">APIキーやパス、定型文などを安全にブラウザ内に保存・コピーできます。</p>
-                    </div>
-                    <button onclick="openVaultModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg flex items-center space-x-1 shadow-sm transition">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span>新規追加</span>
+        <!-- 1. MEMO TAB -->
+        <section id="tab-memo" class="tab-content space-y-3">
+            <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <span id="memo-char-count" class="text-xs font-medium text-slate-500 pl-1">0 文字</span>
+                <div class="flex items-center space-x-1.5">
+                    <select id="memo-export-ext" class="bg-slate-100 dark:bg-slate-800 border-0 rounded-xl text-xs px-2.5 py-1.5 font-medium focus:ring-0">
+                        <option value="txt">.txt</option>
+                        <option value="md">.md</option>
+                        <option value="csv">.csv</option>
+                        <option value="json">.json</option>
+                        <option value="html">.html</option>
+                    </select>
+                    <button onclick="downloadMemo()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-sm flex items-center space-x-1 active:scale-95 transition">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>保存</span>
+                    </button>
+                    <button onclick="clearMemo()" class="p-1.5 text-slate-400 hover:text-red-500 rounded-xl active:scale-95 transition">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </div>
+            </div>
 
-                <!-- Vault List Container -->
-                <div id="vault-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Vault items will be rendered here dynamically -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-3">
+                <input type="text" id="memo-title" placeholder="タイトルを入力..." class="w-full text-base font-bold bg-transparent border-b border-slate-100 dark:border-slate-800 pb-2 focus:outline-none">
+                <textarea id="memo-content" placeholder="メモを入力..." class="w-full h-80 bg-transparent resize-none focus:outline-none text-sm code-font leading-relaxed" oninput="updateMemoStats()"></textarea>
+            </div>
+        </section>
+
+        <!-- 2. CONVERTER TAB -->
+        <section id="tab-converter" class="tab-content hidden space-y-4">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">入力データ</label>
+                    <label class="cursor-pointer text-indigo-600 dark:text-indigo-400 text-xs font-semibold flex items-center space-x-1 active:opacity-70">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                        <span>ファイル選択</span>
+                        <input type="file" id="converter-file-input" class="hidden" onchange="handleFileUpload(event)">
+                    </label>
                 </div>
-            </section>
+                <textarea id="converter-input" placeholder="テキストやJSON、CSVなどを入力..." class="w-full h-32 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none code-font text-xs resize-none"></textarea>
+            </div>
 
-            <!-- 4. IMAGE TAB -->
-            <section id="tab-image" class="tab-content hidden flex-1 flex flex-col h-full p-6 overflow-y-auto">
-                <div class="mb-4">
-                    <h2 class="text-xl font-bold">画像フォーマット変換 & リサイズ</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">画像の拡張子変換（PNG, JPEG, WEBPなど）やリサイズ処理をブラウザ内のみで行います。</p>
-                </div>
+            <!-- Action Grid -->
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="convertData('json-to-csv')" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl text-xs font-semibold text-center shadow-sm active:scale-95 transition">JSON ➔ CSV</button>
+                <button onclick="convertData('csv-to-json')" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl text-xs font-semibold text-center shadow-sm active:scale-95 transition">CSV ➔ JSON</button>
+                <button onclick="convertData('encode-base64')" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl text-xs font-semibold text-center shadow-sm active:scale-95 transition">Base64 エンコード</button>
+                <button onclick="convertData('decode-base64')" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl text-xs font-semibold text-center shadow-sm active:scale-95 transition">Base64 デコード</button>
+            </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Controls -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold mb-1.5">画像選択</label>
-                            <input type="file" id="image-input" accept="image/*" onchange="loadImage(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-slate-700 dark:file:text-slate-200 cursor-pointer">
-                        </div>
-
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <label class="block text-xs font-semibold mb-2">リサイズ設定</label>
-                            <div class="grid grid-cols-2 gap-2 mb-2">
-                                <div>
-                                    <span class="text-[10px] text-slate-400">幅 (px)</span>
-                                    <input type="number" id="img-width" onchange="handleDimensionChange('w')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2">
-                                </div>
-                                <div>
-                                    <span class="text-[10px] text-slate-400">高さ (px)</span>
-                                    <input type="number" id="img-height" onchange="handleDimensionChange('h')" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2">
-                                </div>
-                            </div>
-                            <label class="flex items-center space-x-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                                <input type="checkbox" id="img-aspect-ratio" checked class="rounded text-indigo-600">
-                                <span>アスペクト比を維持</span>
-                            </label>
-                        </div>
-
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <label class="block text-xs font-semibold mb-1.5">出力フォーマット</label>
-                            <select id="img-format" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2">
-                                <option value="image/png">PNG (.png)</option>
-                                <option value="image/jpeg">JPEG (.jpg)</option>
-                                <option value="image/webp">WebP (.webp)</option>
-                            </select>
-                        </div>
-
-                        <button onclick="processAndDownloadImage()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium py-2.5 rounded-lg flex items-center justify-center space-x-2 shadow-sm transition">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                            <span>変換してダウンロード</span>
-                        </button>
-                    </div>
-
-                    <!-- Preview -->
-                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col items-center justify-center min-h-[350px] shadow-sm relative">
-                        <div id="image-placeholder" class="text-center text-slate-400">
-                            <i data-lucide="image-plus" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
-                            <p class="text-xs">画像を選択してください</p>
-                        </div>
-                        <img id="image-preview" class="max-w-full max-h-[450px] object-contain rounded-lg hidden">
-                    </div>
-                </div>
-            </section>
-
-            <!-- 5. BARCODE / QR GENERATOR TAB -->
-            <section id="tab-code" class="tab-content hidden flex-1 flex flex-col h-full p-6 overflow-y-auto">
-                <div class="mb-4">
-                    <h2 class="text-xl font-bold">コード生成 (QRコード & バーコード)</h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">URLやテキストから高品質なQRコード・バーコードを生成・装飾します。</p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Config Controls -->
-                    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm space-y-4">
-                        <!-- Mode Switch -->
-                        <div>
-                            <label class="block text-xs font-semibold mb-1.5">コード種別</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setCodeType('qr')" id="btn-type-qr" class="code-type-btn active text-xs py-2 rounded-lg border text-center font-medium transition">QRコード</button>
-                                <button onclick="setCodeType('barcode')" id="btn-type-barcode" class="code-type-btn text-xs py-2 rounded-lg border text-center font-medium transition">バーコード</button>
-                            </div>
-                        </div>
-
-                        <!-- Content Input -->
-                        <div>
-                            <label class="block text-xs font-semibold mb-1.5">埋め込むテキスト/URL</label>
-                            <textarea id="code-text" placeholder="https://example.com" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2.5 h-20 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-500" oninput="generateCode()"></textarea>
-                        </div>
-
-                        <!-- Style Controls for QR -->
-                        <div id="qr-style-options" class="space-y-3 border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <label class="block text-xs font-semibold">QR装飾オプション</label>
-                            
-                            <div>
-                                <span class="text-[10px] text-slate-400 block mb-1">ドット（点）のスタイル</span>
-                                <select id="qr-dot-style" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2" onchange="generateCode()">
-                                    <option value="square">四角 (Standard)</option>
-                                    <option value="dots">丸 (Dots)</option>
-                                    <option value="rounded">角丸 (Rounded)</option>
-                                    <option value="star">星型 (Star)</option>
-                                    <option value="diamond">ひし形 (Diamond)</option>
-                                </select>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <span class="text-[10px] text-slate-400 block mb-1">前景色 (ドット)</span>
-                                    <input type="color" id="qr-fg-color" value="#000000" class="w-full h-8 rounded border border-slate-200 dark:border-slate-700 cursor-pointer" onchange="generateCode()">
-                                </div>
-                                <div>
-                                    <span class="text-[10px] text-slate-400 block mb-1">背景色</span>
-                                    <input type="color" id="qr-bg-color" value="#ffffff" class="w-full h-8 rounded border border-slate-200 dark:border-slate-700 cursor-pointer" onchange="generateCode()">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Barcode Options -->
-                        <div id="barcode-style-options" class="space-y-3 border-t border-slate-200 dark:border-slate-700 pt-3 hidden">
-                            <label class="block text-xs font-semibold">バーコード形式</label>
-                            <select id="barcode-format" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2" onchange="generateCode()">
-                                <option value="CODE128">CODE128 (汎用)</option>
-                                <option value="EAN13">EAN-13 (JAN)</option>
-                                <option value="UPC">UPC</option>
-                                <option value="CODE39">CODE39</option>
-                            </select>
-                        </div>
-
-                        <button onclick="downloadCodeImage()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium py-2.5 rounded-lg flex items-center justify-center space-x-2 shadow-sm transition">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                            <span>画像として保存 (.png)</span>
-                        </button>
-                    </div>
-
-                    <!-- Live Canvas Preview -->
-                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center min-h-[350px] shadow-sm">
-                        <div id="code-output-container" class="p-6 bg-white rounded-xl border border-slate-100 shadow-inner flex items-center justify-center">
-                            <canvas id="code-canvas" class="max-w-full"></canvas>
-                            <svg id="barcode-svg" class="hidden"></svg>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <!-- Vault Modal -->
-    <div id="vault-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-lg font-bold mb-4">新規保管アイテム追加</h3>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-semibold mb-1">タイトル / 用途</label>
-                    <input type="text" id="vault-input-title" placeholder="例: OpenAI API Key" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2.5 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1">テキスト / 鍵 / パスワード</label>
-                    <textarea id="vault-input-value" placeholder="保管したい文字列を入力..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs p-2.5 h-24 resize-none code-font focus:outline-none"></textarea>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <input type="checkbox" id="vault-input-mask" checked class="rounded text-indigo-600">
-                    <label for="vault-input-mask" class="text-xs text-slate-600 dark:text-slate-300 cursor-pointer">初期表示時にマスク（伏字）処理する</label>
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-3">
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">変換結果</label>
+                <textarea id="converter-output" readonly placeholder="変換結果が表示されます..." class="w-full h-32 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none code-font text-xs resize-none"></textarea>
+                
+                <div class="flex items-center space-x-2 pt-1">
+                    <input type="text" id="converter-filename" value="converted" placeholder="ファイル名" class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-2.5">
+                    <select id="converter-ext" class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-2.5">
+                        <option value="txt">.txt</option>
+                        <option value="csv">.csv</option>
+                        <option value="json">.json</option>
+                        <option value="md">.md</option>
+                    </select>
+                    <button onclick="downloadConvertedFile()" class="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 transition">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
-            <div class="flex justify-end space-x-2 mt-6">
-                <button onclick="closeVaultModal()" class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition">キャンセル</button>
-                <button onclick="saveVaultItem()" class="px-4 py-2 text-xs font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition">保存</button>
+        </section>
+
+        <!-- 3. VAULT TAB -->
+        <section id="tab-vault" class="tab-content hidden space-y-3">
+            <button onclick="openVaultModal()" class="w-full bg-indigo-600 text-white py-3 rounded-2xl font-semibold text-xs shadow-md flex items-center justify-center space-x-2 active:scale-95 transition">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>新規キー・短文を登録</span>
+            </button>
+
+            <div id="vault-list" class="space-y-3">
+                <!-- Dynamic Items -->
+            </div>
+        </section>
+
+        <!-- 4. IMAGE TAB -->
+        <section id="tab-image" class="tab-content hidden space-y-4">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">画像を選択</label>
+                    <input type="file" id="image-input" accept="image/*" onchange="loadImage(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-slate-800 dark:file:text-slate-300">
+                </div>
+
+                <div id="image-preview-container" class="hidden text-center border border-dashed border-slate-200 dark:border-slate-800 p-2 rounded-xl">
+                    <img id="image-preview" class="max-h-48 mx-auto rounded-lg object-contain">
+                </div>
+
+                <div class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-semibold">幅 (px)</span>
+                            <input type="number" id="img-width" onchange="handleDimensionChange('w')" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-2.5">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-semibold">高さ (px)</span>
+                            <input type="number" id="img-height" onchange="handleDimensionChange('h')" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-2.5">
+                        </div>
+                    </div>
+                    <label class="flex items-center space-x-2 text-xs text-slate-600 dark:text-slate-400">
+                        <input type="checkbox" id="img-aspect-ratio" checked class="rounded text-indigo-600">
+                        <span>アスペクト比を固定</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">フォーマット</label>
+                    <select id="img-format" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-2.5 font-medium">
+                        <option value="image/png">PNG (.png)</option>
+                        <option value="image/jpeg">JPEG (.jpg)</option>
+                        <option value="image/webp">WebP (.webp)</option>
+                    </select>
+                </div>
+
+                <button onclick="processAndDownloadImage()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold text-xs shadow-md flex items-center justify-center space-x-2 active:scale-95 transition">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>変換して保存</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 5. CODE / QR TAB -->
+        <section id="tab-code" class="tab-content hidden space-y-4">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-4">
+                <div class="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                    <button onclick="setCodeType('qr')" id="btn-type-qr" class="code-type-btn text-xs py-2 rounded-lg font-semibold transition">QRコード</button>
+                    <button onclick="setCodeType('barcode')" id="btn-type-barcode" class="code-type-btn text-xs py-2 rounded-lg font-semibold transition">バーコード</button>
+                </div>
+
+                <textarea id="code-text" placeholder="URLやテキストを入力..." class="w-full h-20 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none text-xs resize-none" oninput="generateCode()"></textarea>
+
+                <!-- QR Controls -->
+                <div id="qr-style-options" class="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <div>
+                        <span class="text-[10px] text-slate-400 font-semibold block mb-1">ドット（点）デザイン</span>
+                        <select id="qr-dot-style" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-2.5 font-medium" onchange="generateCode()">
+                            <option value="square">四角 (Standard)</option>
+                            <option value="dots">丸 (Dots)</option>
+                            <option value="rounded">角丸 (Rounded)</option>
+                            <option value="star">星型 (Star)</option>
+                            <option value="diamond">ひし形 (Diamond)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-semibold block mb-1">前景色</span>
+                            <input type="color" id="qr-fg-color" value="#000000" class="w-full h-9 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer p-0.5 bg-transparent" onchange="generateCode()">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-semibold block mb-1">背景色</span>
+                            <input type="color" id="qr-bg-color" value="#ffffff" class="w-full h-9 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer p-0.5 bg-transparent" onchange="generateCode()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barcode Options -->
+                <div id="barcode-style-options" class="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3 hidden">
+                    <span class="text-[10px] text-slate-400 font-semibold block">バーコード規格</span>
+                    <select id="barcode-format" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-2.5 font-medium" onchange="generateCode()">
+                        <option value="CODE128">CODE128 (汎用)</option>
+                        <option value="EAN13">EAN-13 (JAN)</option>
+                        <option value="UPC">UPC</option>
+                    </select>
+                </div>
+
+                <!-- Preview Display -->
+                <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-center items-center min-h-[180px]">
+                    <canvas id="code-canvas" class="max-w-full"></canvas>
+                    <svg id="barcode-svg" class="hidden"></svg>
+                </div>
+
+                <button onclick="downloadCodeImage()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold text-xs shadow-md flex items-center justify-center space-x-2 active:scale-95 transition">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>画像として保存</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (Mobile Native Style) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-2 z-30">
+        <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
+            <button onclick="switchTab('memo')" id="nav-memo" class="nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-indigo-600 dark:text-indigo-400">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1 font-medium">メモ</span>
+            </button>
+            <button onclick="switchTab('converter')" id="nav-converter" class="nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-slate-400">
+                <i data-lucide="file-code" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1 font-medium">変換</span>
+            </button>
+            <button onclick="switchTab('vault')" id="nav-vault" class="nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-slate-400">
+                <i data-lucide="key-round" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1 font-medium">保管庫</span>
+            </button>
+            <button onclick="switchTab('image')" id="nav-image" class="nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-slate-400">
+                <i data-lucide="image" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1 font-medium">画像</span>
+            </button>
+            <button onclick="switchTab('code')" id="nav-code" class="nav-btn flex flex-col items-center justify-center py-1 rounded-xl text-slate-400">
+                <i data-lucide="qr-code" class="w-5 h-5"></i>
+                <span class="text-[10px] mt-1 font-medium">コード</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Vault Modal (Bottom Sheet Style) -->
+    <div id="vault-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-5 w-full max-w-md shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-200">
+            <div class="w-12 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto sm:hidden"></div>
+            <h3 class="text-base font-bold">新規保管アイテム</h3>
+            
+            <div class="space-y-3">
+                <input type="text" id="vault-input-title" placeholder="タイトル (例: GitHub Pass)" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-3 focus:outline-none">
+                <textarea id="vault-input-value" placeholder="保管する内容..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs p-3 h-24 resize-none code-font focus:outline-none"></textarea>
+                <label class="flex items-center space-x-2 text-xs text-slate-600 dark:text-slate-400">
+                    <input type="checkbox" id="vault-input-mask" checked class="rounded text-indigo-600">
+                    <span>伏字（マスク）で表示する</span>
+                </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeVaultModal()" class="py-2.5 text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl">キャンセル</button>
+                <button onclick="saveVaultItem()" class="py-2.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl shadow-md">保存</button>
             </div>
         </div>
     </div>
 
-    <!-- QR Core Logic (Minimal Custom Generator) -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-
-    <!-- Application Script -->
+    <!-- JavaScript Logic -->
     <script>
-        // --- Tab Management ---
+        const titles = { memo: '純粋メモ帳', converter: 'ファイル変換', vault: 'キー保管庫', image: '画像加工', code: 'コード生成' };
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('bg-indigo-50', 'text-indigo-600', 'dark:bg-slate-700', 'dark:text-indigo-400');
-                el.classList.add('text-slate-600', 'dark:text-slate-400');
+                el.classList.remove('text-indigo-600', 'dark:text-indigo-400');
+                el.classList.add('text-slate-400');
             });
 
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
             const activeNav = document.getElementById(`nav-${tabId}`);
-            activeNav.classList.add('bg-indigo-50', 'text-indigo-600', 'dark:bg-slate-700', 'dark:text-indigo-400');
+            activeNav.classList.remove('text-slate-400');
+            activeNav.classList.add('text-indigo-600', 'dark:text-indigo-400');
 
+            document.getElementById('header-title').innerText = titles[tabId];
             if (tabId === 'code') generateCode();
         }
 
-        // --- Dark Mode ---
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            document.getElementById('theme-label').innerText = isDark ? 'ダークモード' : 'ライトモード';
         }
 
         // --- 1. MEMO LOGIC ---
         const memoTitle = document.getElementById('memo-title');
         const memoContent = document.getElementById('memo-content');
 
-        // Load memo
         memoTitle.value = localStorage.getItem('app_memo_title') || '';
         memoContent.value = localStorage.getItem('app_memo_content') || '';
         updateMemoStats();
@@ -439,7 +332,7 @@
         }
 
         function clearMemo() {
-            if (confirm('メモをクリアしますか？')) {
+            if (confirm('メモを消去しますか？')) {
                 memoTitle.value = '';
                 memoContent.value = '';
                 localStorage.removeItem('app_memo_title');
@@ -453,11 +346,8 @@
             const ext = document.getElementById('memo-export-ext').value;
             let content = memoContent.value;
 
-            if (ext === 'json') {
-                content = JSON.stringify({ title, content, updatedAt: new Date().toISOString() }, null, 2);
-            } else if (ext === 'html') {
-                content = `<!DOCTYPE html><html><head><title>${title}</title></head><body><h1>${title}</h1><pre>${content}</pre></body></html>`;
-            }
+            if (ext === 'json') content = JSON.stringify({ title, content }, null, 2);
+            else if (ext === 'html') content = `<!DOCTYPE html><html><body><h1>${title}</h1><pre>${content}</pre></body></html>`;
 
             downloadBlob(content, `${title}.${ext}`, 'text/plain;charset=utf-8');
         }
@@ -468,9 +358,7 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = (evt) => {
-                document.getElementById('converter-input').value = evt.target.result;
-            };
+            reader.onload = (evt) => { document.getElementById('converter-input').value = evt.target.result; };
             reader.readAsText(file);
         }
 
@@ -479,29 +367,19 @@
             const outputEl = document.getElementById('converter-output');
 
             try {
-                if (type === 'json-to-csv') {
-                    const parsedJson = JSON.parse(input);
-                    const csv = Papa.unparse(parsedJson);
-                    outputEl.value = csv;
-                } else if (type === 'csv-to-json') {
-                    const parsed = Papa.parse(input, { header: true });
-                    outputEl.value = JSON.stringify(parsed.data, null, 2);
-                } else if (type === 'encode-base64') {
-                    outputEl.value = btoa(unescape(encodeURIComponent(input)));
-                } else if (type === 'decode-base64') {
-                    outputEl.value = decodeURIComponent(escape(atob(input)));
-                }
-            } catch (err) {
-                alert('変換中にエラーが発生しました: ' + err.message);
-            }
+                if (type === 'json-to-csv') outputEl.value = Papa.unparse(JSON.parse(input));
+                else if (type === 'csv-to-json') outputEl.value = JSON.stringify(Papa.parse(input, { header: true }).data, null, 2);
+                else if (type === 'encode-base64') outputEl.value = btoa(unescape(encodeURIComponent(input)));
+                else if (type === 'decode-base64') outputEl.value = decodeURIComponent(escape(atob(input)));
+            } catch (err) { alert('エラー: ' + err.message); }
         }
 
         function downloadConvertedFile() {
             const text = document.getElementById('converter-output').value;
-            const name = document.getElementById('converter-filename').value || 'export';
+            const name = document.getElementById('converter-filename').value || 'file';
             const ext = document.getElementById('converter-ext').value;
 
-            if (!text) return alert('出力データがありません。');
+            if (!text) return alert('出力データがありません');
             downloadBlob(text, `${name}.${ext}`, 'text/plain;charset=utf-8');
         }
 
@@ -513,43 +391,24 @@
             container.innerHTML = '';
 
             if (vaultItems.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-slate-400">
-                        <i data-lucide="shield-alert" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
-                        <p class="text-xs">保管されているデータはありません。</p>
-                    </div>
-                `;
-                lucide.createIcons();
+                container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">データがありません</div>`;
                 return;
             }
 
             vaultItems.forEach((item, index) => {
                 const card = document.createElement('div');
-                card.className = "bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm flex flex-col justify-between";
-                
-                const displayVal = item.masked ? '•'.repeat(Math.min(item.value.length, 20)) : item.value;
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3.5 shadow-sm space-y-2";
+                const displayVal = item.masked ? '•'.repeat(Math.min(item.value.length, 16)) : item.value;
 
                 card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-sm truncate mr-2">${escapeHtml(item.title)}</h4>
-                            <button onclick="deleteVaultItem(${index})" class="text-slate-400 hover:text-red-500 transition">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 mb-3 break-all code-font text-xs">
-                            ${escapeHtml(displayVal)}
-                        </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-xs truncate">${escapeHtml(item.title)}</span>
+                        <button onclick="deleteVaultItem(${index})" class="text-slate-400 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                     </div>
-                    <div class="flex items-center space-x-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
-                        <button onclick="toggleVaultMask(${index})" class="flex-1 text-xs py-1.5 px-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded-md transition flex items-center justify-center space-x-1">
-                            <i data-lucide="${item.masked ? 'eye' : 'eye-off'}" class="w-3.5 h-3.5"></i>
-                            <span>${item.masked ? '表示' : '隠す'}</span>
-                        </button>
-                        <button onclick="copyToClipboard('${escapeJs(item.value)}')" class="flex-1 text-xs py-1.5 px-2 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 rounded-md transition flex items-center justify-center space-x-1">
-                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                            <span>コピー</span>
-                        </button>
+                    <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs code-font break-all">${escapeHtml(displayVal)}</div>
+                    <div class="flex space-x-2 pt-1">
+                        <button onclick="toggleVaultMask(${index})" class="flex-1 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-[11px] font-semibold text-slate-600 dark:text-slate-300">${item.masked ? '表示' : '隠す'}</button>
+                        <button onclick="copyToClipboard('${escapeJs(item.value)}')" class="flex-1 py-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-xl text-[11px] font-semibold">コピー</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -565,7 +424,7 @@
             const value = document.getElementById('vault-input-value').value;
             const masked = document.getElementById('vault-input-mask').checked;
 
-            if (!title || !value) return alert('タイトルと内容を入力してください。');
+            if (!title || !value) return alert('入力してください');
 
             vaultItems.push({ title, value, masked });
             localStorage.setItem('app_vault_items', JSON.stringify(vaultItems));
@@ -576,18 +435,8 @@
             renderVault();
         }
 
-        function toggleVaultMask(index) {
-            vaultItems[index].masked = !vaultItems[index].masked;
-            renderVault();
-        }
-
-        function deleteVaultItem(index) {
-            if (confirm('削除してもよろしいですか？')) {
-                vaultItems.splice(index, 1);
-                localStorage.setItem('app_vault_items', JSON.stringify(vaultItems));
-                renderVault();
-            }
-        }
+        function toggleVaultMask(index) { vaultItems[index].masked = !vaultItems[index].masked; renderVault(); }
+        function deleteVaultItem(index) { if (confirm('削除しますか？')) { vaultItems.splice(index, 1); localStorage.setItem('app_vault_items', JSON.stringify(vaultItems)); renderVault(); } }
 
         // --- 4. IMAGE LOGIC ---
         let currentLoadedImage = null;
@@ -603,11 +452,8 @@
                     currentLoadedImage = img;
                     document.getElementById('img-width').value = img.width;
                     document.getElementById('img-height').value = img.height;
-
-                    const preview = document.getElementById('image-preview');
-                    preview.src = evt.target.result;
-                    preview.classList.remove('hidden');
-                    document.getElementById('image-placeholder').classList.add('hidden');
+                    document.getElementById('image-preview').src = evt.target.result;
+                    document.getElementById('image-preview-container').classList.remove('hidden');
                 };
                 img.src = evt.target.result;
             };
@@ -616,19 +462,13 @@
 
         function handleDimensionChange(type) {
             if (!currentLoadedImage || !document.getElementById('img-aspect-ratio').checked) return;
-
             const ratio = currentLoadedImage.width / currentLoadedImage.height;
-            if (type === 'w') {
-                const w = document.getElementById('img-width').value;
-                document.getElementById('img-height').value = Math.round(w / ratio);
-            } else {
-                const h = document.getElementById('img-height').value;
-                document.getElementById('img-width').value = Math.round(h * ratio);
-            }
+            if (type === 'w') document.getElementById('img-height').value = Math.round(document.getElementById('img-width').value / ratio);
+            else document.getElementById('img-width').value = Math.round(document.getElementById('img-height').value * ratio);
         }
 
         function processAndDownloadImage() {
-            if (!currentLoadedImage) return alert('画像を選択してください。');
+            if (!currentLoadedImage) return alert('画像を選択してください');
 
             const canvas = document.createElement('canvas');
             const w = parseInt(document.getElementById('img-width').value);
@@ -637,16 +477,13 @@
 
             canvas.width = w;
             canvas.height = h;
+            canvas.getContext('2d').drawImage(currentLoadedImage, 0, 0, w, h);
 
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(currentLoadedImage, 0, 0, w, h);
-
-            const ext = format.split('/')[1];
             canvas.toBlob((blob) => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `converted_image.${ext}`;
+                a.download = `image.${format.split('/')[1]}`;
                 a.click();
                 URL.revokeObjectURL(url);
             }, format);
@@ -657,14 +494,14 @@
 
         function setCodeType(type) {
             currentCodeType = type;
-            document.querySelectorAll('.code-type-btn').forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
+            document.querySelectorAll('.code-type-btn').forEach(b => b.classList.remove('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-indigo-600'));
             
             if (type === 'qr') {
-                document.getElementById('btn-type-qr').classList.add('bg-indigo-600', 'text-white');
+                document.getElementById('btn-type-qr').classList.add('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-indigo-600');
                 document.getElementById('qr-style-options').classList.remove('hidden');
                 document.getElementById('barcode-style-options').classList.add('hidden');
             } else {
-                document.getElementById('btn-type-barcode').classList.add('bg-indigo-600', 'text-white');
+                document.getElementById('btn-type-barcode').classList.add('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-indigo-600');
                 document.getElementById('qr-style-options').classList.add('hidden');
                 document.getElementById('barcode-style-options').classList.remove('hidden');
             }
@@ -690,8 +527,8 @@
                     qr.make();
 
                     const count = qr.getModuleCount();
-                    const cellSize = 10;
-                    const margin = 20;
+                    const cellSize = 8;
+                    const margin = 16;
                     const size = count * cellSize + margin * 2;
 
                     canvas.width = size;
@@ -700,7 +537,6 @@
                     const ctx = canvas.getContext('2d');
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, size, size);
-
                     ctx.fillStyle = fgColor;
 
                     for (let r = 0; r < count; r++) {
@@ -715,7 +551,7 @@
                                     ctx.fill();
                                 } else if (dotStyle === 'rounded') {
                                     ctx.beginPath();
-                                    ctx.roundRect(x, y, cellSize, cellSize, 3);
+                                    ctx.roundRect(x, y, cellSize, cellSize, 2);
                                     ctx.fill();
                                 } else if (dotStyle === 'star') {
                                     drawStar(ctx, x + cellSize/2, y + cellSize/2, 5, cellSize/2, cellSize/4);
@@ -733,34 +569,25 @@
                             }
                         }
                     }
-                } catch (e) {
-                    console.error(e);
-                }
+                } catch (e) {}
             } else {
                 canvas.classList.add('hidden');
                 svg.classList.remove('hidden');
-
-                const format = document.getElementById('barcode-format').value;
                 try {
                     JsBarcode("#barcode-svg", text, {
-                        format: format,
+                        format: document.getElementById('barcode-format').value,
                         lineColor: "#000",
                         width: 2,
-                        height: 80,
+                        height: 60,
                         displayValue: true
                     });
-                } catch (e) {
-                    console.error(e);
-                }
+                } catch (e) {}
             }
         }
 
         function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
             let rot = Math.PI / 2 * 3;
-            let x = cx;
-            let y = cy;
-            let step = Math.PI / spikes;
-
+            let x = cx, y = cy, step = Math.PI / spikes;
             ctx.beginPath();
             ctx.moveTo(cx, cy - outerRadius);
             for (let i = 0; i < spikes; i++) {
@@ -768,7 +595,6 @@
                 y = cy + Math.sin(rot) * outerRadius;
                 ctx.lineTo(x, y);
                 rot += step;
-
                 x = cx + Math.cos(rot) * innerRadius;
                 y = cy + Math.sin(rot) * innerRadius;
                 ctx.lineTo(x, y);
@@ -797,8 +623,7 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = img.width;
                     canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
+                    canvas.getContext('2d').drawImage(img, 0, 0);
                     URL.revokeObjectURL(url);
 
                     const a = document.createElement('a');
@@ -810,7 +635,7 @@
             }
         }
 
-        // --- Helper Utilities ---
+        // --- Helpers ---
         function downloadBlob(content, filename, contentType) {
             const blob = new Blob([content], { type: contentType });
             const url = URL.createObjectURL(blob);
@@ -822,22 +647,17 @@
         }
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('クリップボードにコピーしました！');
-            });
+            navigator.clipboard.writeText(text).then(() => alert('コピーしました'));
         }
 
         function escapeHtml(str) {
-            return str.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
+            return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
         }
 
         function escapeJs(str) {
             return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
 
-        // --- Init ---
         window.onload = () => {
             lucide.createIcons();
             switchTab('memo');
