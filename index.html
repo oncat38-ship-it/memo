@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>V1</title></head>
+<body>
+<h1>V1</h1>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;ja&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;&gt;
+    &lt;title&gt;マルチ機能 ユーティリティ App&lt;/title&gt;
+    &lt;!-- Tailwind CSS --&gt;
+    &lt;script src=&quot;https://cdn.tailwindcss.com&quot;&gt;&lt;/script&gt;
+    &lt;!-- Lucide Icons --&gt;
+    &lt;script src=&quot;https://unpkg.com/lucide@latest&quot;&gt;&lt;/script&gt;
+    &lt;!-- PapaParse (CSV Parsing) --&gt;
+    &lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js&quot;&gt;&lt;/script&gt;
+    &lt;!-- JsBarcode --&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js&quot;&gt;&lt;/script&gt;
+    &lt;!-- QR Code Generator --&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js&quot;&gt;&lt;/script&gt;
+
+    &lt;style&gt;
+        @import url(&#039;https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap&#039;);
+        
+        body {
+            font-family: &#039;Inter&#039;, -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .code-font {
+            font-family: &#039;JetBrains Mono&#039;, monospace;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col justify-between select-none text-xs&quot;&gt;
+
+    &lt;!-- Top Compact Header --&gt;
+    &lt;header class=&quot;sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center&quot;&gt;
+        &lt;div class=&quot;flex items-center space-x-1.5&quot;&gt;
+            &lt;div class=&quot;p-1 bg-indigo-600 text-white rounded-md&quot;&gt;
+                &lt;i data-lucide=&quot;cloud&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;
+            &lt;/div&gt;
+            &lt;h1 class=&quot;font-bold text-sm tracking-tight&quot; id=&quot;header-title&quot;&gt;メモ帳&lt;/h1&gt;
+        &lt;/div&gt;
+        
+        &lt;div class=&quot;flex items-center space-x-1.5&quot;&gt;
+            &lt;!-- Header Key / Vault Button (Quick Access) --&gt;
+            &lt;button onclick=&quot;openVaultModal()&quot; class=&quot;p-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 active:scale-95 transition flex items-center justify-center&quot; title=&quot;キー保管庫を開く&quot;&gt;
+                &lt;i data-lucide=&quot;key-round&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+            &lt;/button&gt;
+
+            &lt;!-- User Status / Auth Button --&gt;
+            &lt;div id=&quot;auth-status-container&quot;&gt;
+                &lt;button onclick=&quot;openAuthModal()&quot; class=&quot;flex items-center space-x-1 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold text-[11px] rounded-full border border-indigo-200 dark:border-indigo-800 active:scale-95 transition&quot;&gt;
+                    &lt;i data-lucide=&quot;user&quot; class=&quot;w-3 h-3&quot;&gt;&lt;/i&gt;
+                    &lt;span&gt;ログイン&lt;/span&gt;
+                &lt;/button&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Dark Mode Toggle --&gt;
+            &lt;button onclick=&quot;toggleDarkMode()&quot; class=&quot;p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition&quot;&gt;
+                &lt;i data-lucide=&quot;sun&quot; class=&quot;w-3.5 h-3.5 dark:hidden&quot;&gt;&lt;/i&gt;
+                &lt;i data-lucide=&quot;moon&quot; class=&quot;w-3.5 h-3.5 hidden dark:block&quot;&gt;&lt;/i&gt;
+            &lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/header&gt;
+
+    &lt;!-- Main Content Area --&gt;
+    &lt;main class=&quot;flex-1 overflow-y-auto pb-20 px-3 pt-3 max-w-md mx-auto w-full&quot;&gt;
+
+        &lt;!-- 1. MEMO TAB --&gt;
+        &lt;section id=&quot;tab-memo&quot; class=&quot;tab-content space-y-2&quot;&gt;
+            &lt;div class=&quot;bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2&quot;&gt;
+                &lt;div class=&quot;flex justify-between items-center&quot;&gt;
+                    &lt;span id=&quot;memo-char-count&quot; class=&quot;text-[11px] font-medium text-slate-500 pl-1&quot;&gt;0 文字&lt;/span&gt;
+                    &lt;button onclick=&quot;clearMemo()&quot; class=&quot;p-1 text-slate-400 hover:text-red-500 rounded-lg active:scale-95 transition flex items-center space-x-1&quot;&gt;
+                        &lt;i data-lucide=&quot;trash-2&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                        &lt;span class=&quot;text-[10px]&quot;&gt;クリア&lt;/span&gt;
+                    &lt;/button&gt;
+                &lt;/div&gt;
+
+                &lt;div class=&quot;space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-2&quot;&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block&quot;&gt;保存・出力形式の選択&lt;/span&gt;
+                    &lt;div class=&quot;flex items-center space-x-1.5&quot;&gt;
+                        &lt;select id=&quot;memo-export-ext&quot; onchange=&quot;toggleCustomExt(&#039;memo&#039;)&quot; class=&quot;bg-slate-100 dark:bg-slate-800 border-0 rounded-lg text-[11px] px-2 py-1.5 font-medium focus:ring-0 flex-1&quot;&gt;
+                            &lt;option value=&quot;txt&quot;&gt;.txt (テキスト)&lt;/option&gt;
+                            &lt;option value=&quot;md&quot;&gt;.md (Markdown)&lt;/option&gt;
+                            &lt;option value=&quot;csv&quot;&gt;.csv (CSV)&lt;/option&gt;
+                            &lt;option value=&quot;json&quot;&gt;.json (JSON)&lt;/option&gt;
+                            &lt;option value=&quot;html&quot;&gt;.html (HTML)&lt;/option&gt;
+                            &lt;option value=&quot;xml&quot;&gt;.xml (XML)&lt;/option&gt;
+                            &lt;option value=&quot;yaml&quot;&gt;.yaml (YAML)&lt;/option&gt;
+                            &lt;option value=&quot;log&quot;&gt;.log (ログ)&lt;/option&gt;
+                            &lt;option value=&quot;custom&quot;&gt;その他 (直接入力)&lt;/option&gt;
+                        &lt;/select&gt;
+                        &lt;input type=&quot;text&quot; id=&quot;memo-custom-ext&quot; placeholder=&quot;例: py&quot; class=&quot;hidden w-24 bg-slate-100 dark:bg-slate-800 border-0 rounded-lg text-[11px] px-2 py-1.5 focus:outline-none&quot;&gt;
+                    &lt;/div&gt;
+
+                    &lt;div class=&quot;grid grid-cols-2 gap-1.5 pt-1&quot;&gt;
+                        &lt;button onclick=&quot;openSaveModal(&#039;memo&#039;)&quot; class=&quot;bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-[11px] font-semibold py-1.5 rounded-lg flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                            &lt;i data-lucide=&quot;bookmark&quot; class=&quot;w-3 h-3&quot;&gt;&lt;/i&gt;
+                            &lt;span&gt;ストレージ保存&lt;/span&gt;
+                        &lt;/button&gt;
+                        &lt;button onclick=&quot;downloadMemo()&quot; class=&quot;bg-indigo-600 text-white text-[11px] font-semibold py-1.5 rounded-lg shadow-sm flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                            &lt;i data-lucide=&quot;download&quot; class=&quot;w-3 h-3&quot;&gt;&lt;/i&gt;
+                            &lt;span&gt;ファイル出力&lt;/span&gt;
+                        &lt;/button&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm space-y-2&quot;&gt;
+                &lt;div&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5&quot;&gt;メモのタイトル&lt;/span&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;memo-title&quot; placeholder=&quot;ここにタイトルを入力...&quot; class=&quot;w-full text-sm font-bold bg-transparent border-b border-slate-100 dark:border-slate-800 pb-1.5 focus:outline-none&quot;&gt;
+                &lt;/div&gt;
+                &lt;div&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5&quot;&gt;メモの本文（自動保存）&lt;/span&gt;
+                    &lt;textarea id=&quot;memo-content&quot; placeholder=&quot;ここに自由な文章やテキストを入力してください...&quot; class=&quot;w-full h-56 bg-transparent resize-none focus:outline-none text-xs code-font leading-relaxed&quot; oninput=&quot;updateMemoStats()&quot;&gt;&lt;/textarea&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 2. CONVERTER TAB --&gt;
+        &lt;section id=&quot;tab-converter&quot; class=&quot;tab-content hidden space-y-3&quot;&gt;
+            &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm space-y-2&quot;&gt;
+                &lt;div class=&quot;flex justify-between items-center&quot;&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider&quot;&gt;変換元のデータ&lt;/span&gt;
+                    &lt;label class=&quot;cursor-pointer text-indigo-600 dark:text-indigo-400 text-[11px] font-semibold flex items-center space-x-1 active:opacity-70&quot;&gt;
+                        &lt;i data-lucide=&quot;upload&quot; class=&quot;w-3 h-3&quot;&gt;&lt;/i&gt;
+                        &lt;span&gt;ファイル読込&lt;/span&gt;
+                        &lt;input type=&quot;file&quot; id=&quot;converter-file-input&quot; class=&quot;hidden&quot; onchange=&quot;handleFileUpload(event)&quot;&gt;
+                    &lt;/label&gt;
+                &lt;/div&gt;
+                &lt;textarea id=&quot;converter-input&quot; placeholder=&quot;ここに変換したいテキスト、JSON、CSV等を貼り付け、またはファイルを読み込んでください...&quot; class=&quot;w-full h-24 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none code-font text-[11px] resize-none&quot;&gt;&lt;/textarea&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;grid grid-cols-2 gap-1.5&quot;&gt;
+                &lt;button onclick=&quot;convertData(&#039;json-to-csv&#039;)&quot; class=&quot;bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg text-[11px] font-semibold text-center shadow-sm active:scale-95 transition&quot;&gt;JSON ➔ CSV&lt;/button&gt;
+                &lt;button onclick=&quot;convertData(&#039;csv-to-json&#039;)&quot; class=&quot;bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg text-[11px] font-semibold text-center shadow-sm active:scale-95 transition&quot;&gt;CSV ➔ JSON&lt;/button&gt;
+                &lt;button onclick=&quot;convertData(&#039;encode-base64&#039;)&quot; class=&quot;bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg text-[11px] font-semibold text-center shadow-sm active:scale-95 transition&quot;&gt;Base64 エンコード&lt;/button&gt;
+                &lt;button onclick=&quot;convertData(&#039;decode-base64&#039;)&quot; class=&quot;bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-lg text-[11px] font-semibold text-center shadow-sm active:scale-95 transition&quot;&gt;Base64 デコード&lt;/button&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm space-y-2&quot;&gt;
+                &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block&quot;&gt;変換結果の出力&lt;/span&gt;
+                &lt;textarea id=&quot;converter-output&quot; readonly placeholder=&quot;ここに変換結果が表示されます...&quot; class=&quot;w-full h-24 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none code-font text-[11px] resize-none&quot;&gt;&lt;/textarea&gt;
+                
+                &lt;div class=&quot;space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800&quot;&gt;
+                    &lt;div class=&quot;grid grid-cols-2 gap-1.5&quot;&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;ファイル名&lt;/span&gt;
+                            &lt;input type=&quot;text&quot; id=&quot;converter-filename&quot; value=&quot;converted&quot; placeholder=&quot;ファイル名&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5&quot;&gt;
+                        &lt;/div&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;拡張子を選択/自由入力&lt;/span&gt;
+                            &lt;div class=&quot;flex items-center space-x-1&quot;&gt;
+                                &lt;select id=&quot;converter-ext&quot; onchange=&quot;toggleCustomExt(&#039;converter&#039;)&quot; class=&quot;bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5 flex-1&quot;&gt;
+                                    &lt;option value=&quot;txt&quot;&gt;.txt&lt;/option&gt;
+                                    &lt;option value=&quot;csv&quot;&gt;.csv&lt;/option&gt;
+                                    &lt;option value=&quot;json&quot;&gt;.json&lt;/option&gt;
+                                    &lt;option value=&quot;md&quot;&gt;.md&lt;/option&gt;
+                                    &lt;option value=&quot;html&quot;&gt;.html&lt;/option&gt;
+                                    &lt;option value=&quot;xml&quot;&gt;.xml&lt;/option&gt;
+                                    &lt;option value=&quot;tsv&quot;&gt;.tsv&lt;/option&gt;
+                                    &lt;option value=&quot;sql&quot;&gt;.sql&lt;/option&gt;
+                                    &lt;option value=&quot;ini&quot;&gt;.ini&lt;/option&gt;
+                                    &lt;option value=&quot;custom&quot;&gt;その他 (直接入力)&lt;/option&gt;
+                                &lt;/select&gt;
+                                &lt;input type=&quot;text&quot; id=&quot;converter-custom-ext&quot; placeholder=&quot;例: env&quot; class=&quot;hidden w-16 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5&quot;&gt;
+                            &lt;/div&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+
+                    &lt;div class=&quot;grid grid-cols-2 gap-1.5 pt-1&quot;&gt;
+                        &lt;button onclick=&quot;openSaveModal(&#039;converter&#039;)&quot; class=&quot;bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-1.5 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                            &lt;i data-lucide=&quot;bookmark&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                            &lt;span&gt;ストレージ保存&lt;/span&gt;
+                        &lt;/button&gt;
+                        &lt;button onclick=&quot;downloadConvertedFile()&quot; class=&quot;bg-indigo-600 text-white py-1.5 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                            &lt;i data-lucide=&quot;download&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                            &lt;span&gt;ファイル出力&lt;/span&gt;
+                        &lt;/button&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 3. IMAGE TAB --&gt;
+        &lt;section id=&quot;tab-image&quot; class=&quot;tab-content hidden space-y-3&quot;&gt;
+            &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm space-y-3&quot;&gt;
+                &lt;div&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1&quot;&gt;変換・リサイズする画像を選択&lt;/span&gt;
+                    &lt;input type=&quot;file&quot; id=&quot;image-input&quot; accept=&quot;image/*&quot; onchange=&quot;loadImage(event)&quot; class=&quot;w-full text-[11px] text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-slate-800 dark:file:text-slate-300&quot;&gt;
+                &lt;/div&gt;
+
+                &lt;div id=&quot;image-preview-container&quot; class=&quot;hidden text-center border border-dashed border-slate-200 dark:border-slate-800 p-2 rounded-lg&quot;&gt;
+                    &lt;img id=&quot;image-preview&quot; class=&quot;max-h-36 mx-auto rounded-md object-contain&quot;&gt;
+                &lt;/div&gt;
+
+                &lt;div class=&quot;space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2&quot;&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block&quot;&gt;サイズ変更 (px)&lt;/span&gt;
+                    &lt;div class=&quot;grid grid-cols-2 gap-2&quot;&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;幅 (Width)&lt;/span&gt;
+                            &lt;input type=&quot;number&quot; id=&quot;img-width&quot; placeholder=&quot;幅&quot; onchange=&quot;handleDimensionChange(&#039;w&#039;)&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5&quot;&gt;
+                        &lt;/div&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;高さ (Height)&lt;/span&gt;
+                            &lt;input type=&quot;number&quot; id=&quot;img-height&quot; placeholder=&quot;高さ&quot; onchange=&quot;handleDimensionChange(&#039;h&#039;)&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5&quot;&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                    &lt;label class=&quot;flex items-center space-x-1.5 text-[11px] text-slate-600 dark:text-slate-400&quot;&gt;
+                        &lt;input type=&quot;checkbox&quot; id=&quot;img-aspect-ratio&quot; checked class=&quot;rounded text-indigo-600&quot;&gt;
+                        &lt;span&gt;アスペクト比（縦横比）を維持する&lt;/span&gt;
+                    &lt;/label&gt;
+                &lt;/div&gt;
+
+                &lt;div&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1&quot;&gt;出力フォーマット (拡張子)&lt;/span&gt;
+                    &lt;select id=&quot;img-format&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5 font-medium&quot;&gt;
+                        &lt;option value=&quot;image/png&quot;&gt;PNG (.png)&lt;/option&gt;
+                        &lt;option value=&quot;image/jpeg&quot;&gt;JPEG (.jpg)&lt;/option&gt;
+                        &lt;option value=&quot;image/webp&quot;&gt;WebP (.webp)&lt;/option&gt;
+                        &lt;option value=&quot;image/bmp&quot;&gt;BMP (.bmp)&lt;/option&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+
+                &lt;div class=&quot;grid grid-cols-2 gap-1.5 pt-1&quot;&gt;
+                    &lt;button onclick=&quot;openSaveModal(&#039;image&#039;)&quot; class=&quot;bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-2 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                        &lt;i data-lucide=&quot;bookmark&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                        &lt;span&gt;ストレージ保存&lt;/span&gt;
+                    &lt;/button&gt;
+                    &lt;button onclick=&quot;processAndDownloadImage()&quot; class=&quot;bg-indigo-600 text-white py-2 rounded-lg font-semibold text-[11px] shadow-sm flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                        &lt;i data-lucide=&quot;download&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                        &lt;span&gt;ダウンロード&lt;/span&gt;
+                    &lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 4. CODE / QR TAB --&gt;
+        &lt;section id=&quot;tab-code&quot; class=&quot;tab-content hidden space-y-3&quot;&gt;
+            &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm space-y-3&quot;&gt;
+                &lt;div class=&quot;grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg&quot;&gt;
+                    &lt;button onclick=&quot;setCodeType(&#039;qr&#039;)&quot; id=&quot;btn-type-qr&quot; class=&quot;code-type-btn text-[11px] py-1.5 rounded-md font-semibold transition&quot;&gt;高機能QRコード&lt;/button&gt;
+                    &lt;button onclick=&quot;setCodeType(&#039;barcode&#039;)&quot; id=&quot;btn-type-barcode&quot; class=&quot;code-type-btn text-[11px] py-1.5 rounded-md font-semibold transition&quot;&gt;バーコード&lt;/button&gt;
+                &lt;/div&gt;
+
+                &lt;div&gt;
+                    &lt;div class=&quot;flex justify-between items-center mb-1&quot;&gt;
+                        &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider&quot;&gt;埋め込むテキスト・URL&lt;/span&gt;
+                        &lt;span id=&quot;code-text-length&quot; class=&quot;text-[10px] text-slate-400&quot;&gt;0 文字&lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;textarea id=&quot;code-text&quot; placeholder=&quot;ここにURLや文字を入力...&quot; class=&quot;w-full h-16 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:outline-none text-[11px] resize-none&quot; oninput=&quot;generateCode()&quot;&gt;&lt;/textarea&gt;
+                &lt;/div&gt;
+
+                &lt;!-- QR Advanced Style Options --&gt;
+                &lt;div id=&quot;qr-style-options&quot; class=&quot;space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2&quot;&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block&quot;&gt;広告向けプロデザイン設定&lt;/span&gt;
+                    
+                    &lt;div&gt;
+                        &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;ドット（点）のスタイルパターン&lt;/span&gt;
+                        &lt;select id=&quot;qr-dot-style&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5 font-medium&quot; onchange=&quot;generateCode()&quot;&gt;
+                            &lt;option value=&quot;square&quot;&gt;Standard Square (標準四角)&lt;/option&gt;
+                            &lt;option value=&quot;dots&quot;&gt;Smooth Dots (丸・ドット)&lt;/option&gt;
+                            &lt;option value=&quot;rounded&quot;&gt;Rounded Box (角丸ボックス)&lt;/option&gt;
+                            &lt;option value=&quot;wave&quot;&gt;Wave (波型パターン)&lt;/option&gt;
+                            &lt;option value=&quot;liquid&quot;&gt;Liquid Drop (液体風オーガニック)&lt;/option&gt;
+                            &lt;option value=&quot;line&quot;&gt;Vertical Bar (縦ライン)&lt;/option&gt;
+                            &lt;option value=&quot;cross&quot;&gt;Cross Plus (プラス記号)&lt;/option&gt;
+                            &lt;option value=&quot;hexagon&quot;&gt;Hexagon (六角形)&lt;/option&gt;
+                            &lt;option value=&quot;diamond&quot;&gt;Diamond (ひし形)&lt;/option&gt;
+                            &lt;option value=&quot;star&quot;&gt;Star (星型)&lt;/option&gt;
+                        &lt;/select&gt;
+                    &lt;/div&gt;
+
+                    &lt;div class=&quot;grid grid-cols-2 gap-2&quot;&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;前景色 (単色 / グラデ開始)&lt;/span&gt;
+                            &lt;input type=&quot;color&quot; id=&quot;qr-fg-color&quot; value=&quot;#4f46e5&quot; class=&quot;w-full h-7 rounded-lg border border-slate-200 dark:border-slate-800 cursor-pointer p-0.5 bg-transparent&quot; onchange=&quot;generateCode()&quot;&gt;
+                        &lt;/div&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;グラデーション終了色&lt;/span&gt;
+                            &lt;input type=&quot;color&quot; id=&quot;qr-grad-color&quot; value=&quot;#ec4899&quot; class=&quot;w-full h-7 rounded-lg border border-slate-200 dark:border-slate-800 cursor-pointer p-0.5 bg-transparent&quot; onchange=&quot;generateCode()&quot;&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+
+                    &lt;div class=&quot;grid grid-cols-2 gap-2&quot;&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;四隅アイ(目)の色&lt;/span&gt;
+                            &lt;input type=&quot;color&quot; id=&quot;qr-eye-color&quot; value=&quot;#312e81&quot; class=&quot;w-full h-7 rounded-lg border border-slate-200 dark:border-slate-800 cursor-pointer p-0.5 bg-transparent&quot; onchange=&quot;generateCode()&quot;&gt;
+                        &lt;/div&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;背景色&lt;/span&gt;
+                            &lt;input type=&quot;color&quot; id=&quot;qr-bg-color&quot; value=&quot;#ffffff&quot; class=&quot;w-full h-7 rounded-lg border border-slate-200 dark:border-slate-800 cursor-pointer p-0.5 bg-transparent&quot; onchange=&quot;generateCode()&quot;&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+
+                    &lt;div class=&quot;pt-1&quot;&gt;
+                        &lt;label class=&quot;flex items-center space-x-1.5 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer mb-1&quot;&gt;
+                            &lt;input type=&quot;checkbox&quot; id=&quot;qr-use-gradient&quot; class=&quot;rounded text-indigo-600&quot; onchange=&quot;generateCode()&quot;&gt;
+                            &lt;span&gt;グラデーションカラーを有効化&lt;/span&gt;
+                        &lt;/label&gt;
+                    &lt;/div&gt;
+
+                    &lt;!-- Logo Overlay Config --&gt;
+                    &lt;div class=&quot;border-t border-slate-100 dark:border-slate-800 pt-2 space-y-1&quot;&gt;
+                        &lt;div class=&quot;flex justify-between items-center&quot;&gt;
+                            &lt;span class=&quot;text-[9px] text-slate-400 font-bold uppercase&quot;&gt;中央ロゴ/アイコン合成&lt;/span&gt;
+                            &lt;button onclick=&quot;clearLogoImage()&quot; class=&quot;text-[9px] text-red-500 underline&quot;&gt;ロゴ消去&lt;/button&gt;
+                        &lt;/div&gt;
+                        &lt;input type=&quot;file&quot; id=&quot;qr-logo-input&quot; accept=&quot;image/*&quot; class=&quot;w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:bg-indigo-50 file:text-indigo-600 dark:file:bg-slate-800 dark:file:text-slate-300&quot; onchange=&quot;loadLogoImage(event)&quot;&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+
+                &lt;div id=&quot;barcode-style-options&quot; class=&quot;space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-2 hidden&quot;&gt;
+                    &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase tracking-wider block&quot;&gt;バーコードの規格&lt;/span&gt;
+                    &lt;select id=&quot;barcode-format&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5 font-medium&quot; onchange=&quot;generateCode()&quot;&gt;
+                        &lt;option value=&quot;CODE128&quot;&gt;CODE128 (汎用)&lt;/option&gt;
+                        &lt;option value=&quot;EAN13&quot;&gt;EAN-13 (JAN)&lt;/option&gt;
+                        &lt;option value=&quot;UPC&quot;&gt;UPC&lt;/option&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+
+                &lt;div class=&quot;bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-center items-center min-h-[160px]&quot;&gt;
+                    &lt;canvas id=&quot;code-canvas&quot; class=&quot;max-w-full&quot;&gt;&lt;/canvas&gt;
+                    &lt;svg id=&quot;barcode-svg&quot; class=&quot;hidden&quot;&gt;&lt;/svg&gt;
+                &lt;/div&gt;
+
+                &lt;div class=&quot;grid grid-cols-2 gap-1.5&quot;&gt;
+                    &lt;button onclick=&quot;openSaveModal(&#039;code&#039;)&quot; class=&quot;bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-2 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                        &lt;i data-lucide=&quot;bookmark&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                        &lt;span&gt;ストレージ保存&lt;/span&gt;
+                    &lt;/button&gt;
+                    &lt;button onclick=&quot;downloadCodeImage()&quot; class=&quot;bg-indigo-600 text-white py-2 rounded-lg font-semibold text-[11px] shadow-sm flex items-center justify-center space-x-1 active:scale-95 transition&quot;&gt;
+                        &lt;i data-lucide=&quot;download&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                        &lt;span&gt;ダウンロード&lt;/span&gt;
+                    &lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 5. CLOUD STORAGE TAB --&gt;
+        &lt;section id=&quot;tab-saved&quot; class=&quot;tab-content hidden space-y-3&quot;&gt;
+            &lt;div class=&quot;bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5&quot;&gt;
+                &lt;div class=&quot;flex justify-between items-center&quot;&gt;
+                    &lt;span class=&quot;font-bold text-xs&quot;&gt;クラウドストレージ&lt;/span&gt;
+                    &lt;span id=&quot;saved-assets-count&quot; class=&quot;text-[10px] bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold&quot;&gt;0 件&lt;/span&gt;
+                &lt;/div&gt;
+
+                &lt;!-- Search Input --&gt;
+                &lt;div class=&quot;relative&quot;&gt;
+                    &lt;i data-lucide=&quot;search&quot; class=&quot;w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5&quot;&gt;&lt;/i&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;storage-search-input&quot; placeholder=&quot;タイトルや内容で検索...&quot; oninput=&quot;renderSavedAssets()&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] pl-8 pr-3 py-1.5 focus:outline-none&quot;&gt;
+                &lt;/div&gt;
+
+                &lt;!-- Category / Group Filter Tabs --&gt;
+                &lt;div class=&quot;flex space-x-1 overflow-x-auto no-scrollbar pb-1 text-[11px]&quot;&gt;
+                    &lt;button onclick=&quot;setStorageGroup(&#039;all&#039;)&quot; id=&quot;group-btn-all&quot; class=&quot;group-filter-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold whitespace-nowrap&quot;&gt;すべて&lt;/button&gt;
+                    &lt;button onclick=&quot;setStorageGroup(&#039;memo&#039;)&quot; id=&quot;group-btn-memo&quot; class=&quot;group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap&quot;&gt;メモ&lt;/button&gt;
+                    &lt;button onclick=&quot;setStorageGroup(&#039;text&#039;)&quot; id=&quot;group-btn-text&quot; class=&quot;group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap&quot;&gt;テキスト・変換&lt;/button&gt;
+                    &lt;button onclick=&quot;setStorageGroup(&#039;media&#039;)&quot; id=&quot;group-btn-media&quot; class=&quot;group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap&quot;&gt;画像・QR&lt;/button&gt;
+                &lt;/div&gt;
+
+                &lt;!-- Tag Cloud Container --&gt;
+                &lt;div id=&quot;storage-tags-filter&quot; class=&quot;flex flex-wrap gap-1 pt-1 border-t border-slate-100 dark:border-slate-800&quot;&gt;&lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div id=&quot;saved-assets-list&quot; class=&quot;space-y-2&quot;&gt;&lt;/div&gt;
+        &lt;/section&gt;
+
+    &lt;/main&gt;
+
+    &lt;!-- Bottom Navigation Bar (4 Compact Tabs) --&gt;
+    &lt;nav class=&quot;fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 z-30&quot;&gt;
+        &lt;div class=&quot;max-w-md mx-auto grid grid-cols-4 gap-1&quot;&gt;
+            &lt;button onclick=&quot;switchTab(&#039;memo&#039;)&quot; id=&quot;nav-memo&quot; class=&quot;nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-indigo-600 dark:text-indigo-400&quot;&gt;
+                &lt;i data-lucide=&quot;file-text&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;
+                &lt;span class=&quot;text-[9px] mt-0.5 font-medium&quot;&gt;メモ&lt;/span&gt;
+            &lt;/button&gt;
+            &lt;button onclick=&quot;switchTab(&#039;converter&#039;)&quot; id=&quot;nav-converter&quot; class=&quot;nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-slate-400&quot;&gt;
+                &lt;i data-lucide=&quot;file-code&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;
+                &lt;span class=&quot;text-[9px] mt-0.5 font-medium&quot;&gt;変換&lt;/span&gt;
+            &lt;/button&gt;
+            &lt;button onclick=&quot;switchTab(&#039;image&#039;)&quot; id=&quot;nav-image&quot; class=&quot;nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-slate-400&quot;&gt;
+                &lt;i data-lucide=&quot;image&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;
+                &lt;span class=&quot;text-[9px] mt-0.5 font-medium&quot;&gt;画像&lt;/span&gt;
+            &lt;/button&gt;
+            &lt;button onclick=&quot;switchTab(&#039;code&#039;)&quot; id=&quot;nav-code&quot; class=&quot;nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-slate-400&quot;&gt;
+                &lt;i data-lucide=&quot;qr-code&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;
+                &lt;span class=&quot;text-[9px] mt-0.5 font-medium&quot;&gt;コード&lt;/span&gt;
+            &lt;/button&gt;
+            &lt;button onclick=&quot;switchTab(&#039;saved&#039;)&quot; id=&quot;nav-saved&quot; class=&quot;nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-slate-400&quot;&gt;
+                &lt;i data-lucide=&quot;cloud&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;
+                &lt;span class=&quot;text-[9px] mt-0.5 font-medium&quot;&gt;ストレージ&lt;/span&gt;
+            &lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;!-- Key Vault Modal (Quick Header Access) --&gt;
+    &lt;div id=&quot;vault-modal&quot; class=&quot;fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center&quot;&gt;
+        &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-4 w-full max-w-md shadow-2xl space-y-3 max-h-[85vh] flex flex-col&quot;&gt;
+            &lt;div class=&quot;flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2&quot;&gt;
+                &lt;div class=&quot;flex items-center space-x-1.5&quot;&gt;
+                    &lt;i data-lucide=&quot;key-round&quot; class=&quot;w-4 h-4 text-indigo-600&quot;&gt;&lt;/i&gt;
+                    &lt;h3 class=&quot;text-sm font-bold&quot;&gt;キー・暗号保管庫&lt;/h3&gt;
+                &lt;/div&gt;
+                &lt;button onclick=&quot;closeVaultModal()&quot; class=&quot;text-slate-400 hover:text-slate-600&quot;&gt;&lt;i data-lucide=&quot;x&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Vault Controls (Search, Group, New Item Button) --&gt;
+            &lt;div class=&quot;space-y-2&quot;&gt;
+                &lt;div class=&quot;flex space-x-1.5&quot;&gt;
+                    &lt;div class=&quot;relative flex-1&quot;&gt;
+                        &lt;i data-lucide=&quot;search&quot; class=&quot;w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5&quot;&gt;&lt;/i&gt;
+                        &lt;input type=&quot;text&quot; id=&quot;vault-search-input&quot; placeholder=&quot;キー名・内容で検索...&quot; oninput=&quot;renderVault()&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] pl-8 pr-2 py-1.5 focus:outline-none&quot;&gt;
+                    &lt;/div&gt;
+                    &lt;button onclick=&quot;openAddVaultItemForm()&quot; class=&quot;bg-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center space-x-1 shrink-0 active:scale-95 transition&quot;&gt;
+                        &lt;i data-lucide=&quot;plus&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;
+                        &lt;span&gt;追加&lt;/span&gt;
+                    &lt;/button&gt;
+                &lt;/div&gt;
+
+                &lt;!-- Group Tabs --&gt;
+                &lt;div class=&quot;flex space-x-1 overflow-x-auto no-scrollbar text-[10px]&quot;&gt;
+                    &lt;button onclick=&quot;setVaultGroup(&#039;all&#039;)&quot; id=&quot;vault-group-btn-all&quot; class=&quot;vault-group-filter-btn px-2 py-0.5 rounded-md bg-indigo-600 text-white font-semibold whitespace-nowrap&quot;&gt;すべて&lt;/button&gt;
+                    &lt;button onclick=&quot;setVaultGroup(&#039;api&#039;)&quot; id=&quot;vault-group-btn-api&quot; class=&quot;vault-group-filter-btn px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap&quot;&gt;APIキー&lt;/button&gt;
+                    &lt;button onclick=&quot;setVaultGroup(&#039;pass&#039;)&quot; id=&quot;vault-group-btn-pass&quot; class=&quot;vault-group-filter-btn px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap&quot;&gt;パスワード&lt;/button&gt;
+                    &lt;button onclick=&quot;setVaultGroup(&#039;server&#039;)&quot; id=&quot;vault-group-btn-server&quot; class=&quot;vault-group-filter-btn px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap&quot;&gt;サーバー/SSH&lt;/button&gt;
+                    &lt;button onclick=&quot;setVaultGroup(&#039;other&#039;)&quot; id=&quot;vault-group-btn-other&quot; class=&quot;vault-group-filter-btn px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap&quot;&gt;その他&lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Add New Vault Form (Collapsible) --&gt;
+            &lt;div id=&quot;vault-add-form&quot; class=&quot;hidden bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2&quot;&gt;
+                &lt;span class=&quot;text-[10px] font-bold text-slate-400 uppercase block&quot;&gt;新規キー登録&lt;/span&gt;
+                &lt;input type=&quot;text&quot; id=&quot;vault-input-title&quot; placeholder=&quot;タイトル・用途 (例: OpenAI API Key)&quot; class=&quot;w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2 focus:outline-none&quot;&gt;
+                &lt;textarea id=&quot;vault-input-value&quot; placeholder=&quot;保管する内容・APIキー...&quot; class=&quot;w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2 h-16 resize-none code-font focus:outline-none&quot;&gt;&lt;/textarea&gt;
+                
+                &lt;div class=&quot;grid grid-cols-2 gap-2&quot;&gt;
+                    &lt;select id=&quot;vault-input-group&quot; class=&quot;bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5&quot;&gt;
+                        &lt;option value=&quot;api&quot;&gt;APIキー&lt;/option&gt;
+                        &lt;option value=&quot;pass&quot;&gt;パスワード&lt;/option&gt;
+                        &lt;option value=&quot;server&quot;&gt;サーバー/SSH&lt;/option&gt;
+                        &lt;option value=&quot;other&quot;&gt;その他&lt;/option&gt;
+                    &lt;/select&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;vault-input-tags&quot; placeholder=&quot;タグ (例: 本番, GitHub)&quot; class=&quot;bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] p-1.5&quot;&gt;
+                &lt;/div&gt;
+
+                &lt;div class=&quot;flex justify-between items-center pt-1&quot;&gt;
+                    &lt;label class=&quot;flex items-center space-x-1.5 text-xs text-slate-600 dark:text-slate-400&quot;&gt;
+                        &lt;input type=&quot;checkbox&quot; id=&quot;vault-input-mask&quot; checked class=&quot;rounded text-indigo-600&quot;&gt;
+                        &lt;span&gt;伏字にする&lt;/span&gt;
+                    &lt;/label&gt;
+                    &lt;div class=&quot;flex space-x-1.5&quot;&gt;
+                        &lt;button onclick=&quot;closeAddVaultItemForm()&quot; class=&quot;px-2.5 py-1 text-[11px] text-slate-500&quot;&gt;キャンセル&lt;/button&gt;
+                        &lt;button onclick=&quot;saveVaultItem()&quot; class=&quot;px-3 py-1 bg-indigo-600 text-white rounded-lg text-[11px] font-semibold&quot;&gt;保存&lt;/button&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;!-- Vault List Container --&gt;
+            &lt;div id=&quot;vault-list&quot; class=&quot;flex-1 overflow-y-auto space-y-2 pr-0.5&quot;&gt;&lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Save Meta Modal (Cloud Storage Setup) --&gt;
+    &lt;div id=&quot;save-meta-modal&quot; class=&quot;fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center&quot;&gt;
+        &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-4 w-full max-w-md shadow-2xl space-y-3&quot;&gt;
+            &lt;h3 class=&quot;text-sm font-bold flex items-center space-x-1.5&quot;&gt;
+                &lt;i data-lucide=&quot;bookmark-plus&quot; class=&quot;w-4 h-4 text-indigo-600&quot;&gt;&lt;/i&gt;
+                &lt;span&gt;クラウドストレージへ保存&lt;/span&gt;
+            &lt;/h3&gt;
+            
+            &lt;div class=&quot;space-y-2.5&quot;&gt;
+                &lt;div&gt;
+                    &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;ファイル名 / タイトル&lt;/span&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;save-modal-title&quot; placeholder=&quot;タイトルを入力...&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 focus:outline-none&quot;&gt;
+                &lt;/div&gt;
+
+                &lt;div&gt;
+                    &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;グループ (カテゴリ)&lt;/span&gt;
+                    &lt;select id=&quot;save-modal-group&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 font-medium&quot;&gt;
+                        &lt;option value=&quot;memo&quot;&gt;メモ&lt;/option&gt;
+                        &lt;option value=&quot;text&quot;&gt;テキスト・変換&lt;/option&gt;
+                        &lt;option value=&quot;media&quot;&gt;画像・QR&lt;/option&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+
+                &lt;div&gt;
+                    &lt;span class=&quot;text-[9px] text-slate-400 block mb-0.5&quot;&gt;タグ (カンマ区切り、例: 仕事, API, 重要)&lt;/span&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;save-modal-tags&quot; placeholder=&quot;タグ1, タグ2&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 focus:outline-none&quot;&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;grid grid-cols-2 gap-2 pt-1&quot;&gt;
+                &lt;button onclick=&quot;closeSaveModal()&quot; class=&quot;py-2.5 text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl&quot;&gt;キャンセル&lt;/button&gt;
+                &lt;button onclick=&quot;confirmSaveToApp()&quot; class=&quot;py-2.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl shadow-md&quot;&gt;保存を実行&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Auth Modal --&gt;
+    &lt;div id=&quot;auth-modal&quot; class=&quot;fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center&quot;&gt;
+        &lt;div class=&quot;bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-4 w-full max-w-md shadow-2xl space-y-3&quot;&gt;
+            &lt;div class=&quot;flex justify-between items-center&quot;&gt;
+                &lt;h3 class=&quot;text-sm font-bold&quot;&gt;アカウント ログイン / 登録&lt;/h3&gt;
+                &lt;button onclick=&quot;closeAuthModal()&quot; class=&quot;text-slate-400&quot;&gt;&lt;i data-lucide=&quot;x&quot; class=&quot;w-4 h-4&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;/div&gt;
+
+            &lt;button onclick=&quot;loginWithGoogle()&quot; class=&quot;w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-100 py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center space-x-2 active:scale-95 transition&quot;&gt;
+                &lt;svg class=&quot;w-4 h-4&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path fill=&quot;#4285F4&quot; d=&quot;M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z&quot;/&gt;&lt;path fill=&quot;#34A853&quot; d=&quot;M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z&quot;/&gt;&lt;path fill=&quot;#FBBC05&quot; d=&quot;M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z&quot;/&gt;&lt;path fill=&quot;#EA4335&quot; d=&quot;M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z&quot;/&gt;&lt;/svg&gt;
+                &lt;span&gt;Google アカウントでログイン&lt;/span&gt;
+            &lt;/button&gt;
+
+            &lt;div class=&quot;relative flex py-0.5 items-center&quot;&gt;
+                &lt;div class=&quot;flex-grow border-t border-slate-200 dark:border-slate-800&quot;&gt;&lt;/div&gt;
+                &lt;span class=&quot;flex-shrink mx-2 text-[9px] text-slate-400 uppercase font-semibold&quot;&gt;ID ログイン / 登録&lt;/span&gt;
+                &lt;div class=&quot;flex-grow border-t border-slate-200 dark:border-slate-800&quot;&gt;&lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;space-y-2&quot;&gt;
+                &lt;div&gt;
+                    &lt;div class=&quot;flex justify-between items-center mb-0.5&quot;&gt;
+                        &lt;label class=&quot;text-[10px] font-semibold text-slate-400&quot;&gt;ユーザーID (自由指定)&lt;/label&gt;
+                        &lt;span id=&quot;id-rule-indicator&quot; class=&quot;text-[10px] text-slate-400&quot;&gt;3文字以上&lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;auth-userid&quot; placeholder=&quot;例: my_username&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 focus:outline-none&quot; oninput=&quot;validateAuthInputs()&quot;&gt;
+                &lt;/div&gt;
+
+                &lt;div&gt;
+                    &lt;div class=&quot;flex justify-between items-center mb-0.5&quot;&gt;
+                        &lt;label class=&quot;text-[10px] font-semibold text-slate-400&quot;&gt;パスワード&lt;/label&gt;
+                        &lt;span id=&quot;pass-rule-indicator&quot; class=&quot;text-[10px] text-slate-400&quot;&gt;6文字以上必須&lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;input type=&quot;password&quot; id=&quot;auth-password&quot; placeholder=&quot;6文字以上のパスワード&quot; class=&quot;w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 focus:outline-none&quot; oninput=&quot;validateAuthInputs()&quot;&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class=&quot;grid grid-cols-2 gap-2 pt-1&quot;&gt;
+                &lt;button onclick=&quot;loginWithId()&quot; class=&quot;py-2.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl shadow-md active:scale-95 transition&quot;&gt;ログイン&lt;/button&gt;
+                &lt;button onclick=&quot;registerWithId()&quot; class=&quot;py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl active:scale-95 transition&quot;&gt;新規アカウント作成&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Firebase SDK --&gt;
+    &lt;script type=&quot;module&quot;&gt;
+        import { initializeApp } from &quot;https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js&quot;;
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from &quot;https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js&quot;;
+        import { getFirestore, doc, setDoc, getDoc } from &quot;https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js&quot;;
+
+        const firebaseConfig = {
+            apiKey: &quot;AIzaSyAoNZm6KwPQuWbC0W65sOh4soLMx1UoUrQ&quot;,
+            authDomain: &quot;g-account-6f48b.firebaseapp.com&quot;,
+            projectId: &quot;g-account-6f48b&quot;,
+            storageBucket: &quot;g-account-6f48b.firebasestorage.app&quot;,
+            messagingSenderId: &quot;719634797870&quot;,
+            appId: &quot;1:719634797870:web:5e6c3affbed118aa8d16bf&quot;,
+            measurementId: &quot;G-0WB2ZMX6K1&quot;
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.currentUser = null;
+
+        onAuthStateChanged(auth, async (user) =&gt; {
+            window.currentUser = user;
+            const container = document.getElementById(&#039;auth-status-container&#039;);
+
+            if (user) {
+                const displayName = user.displayName || user.email.split(&#039;@&#039;)[0];
+                container.innerHTML = `
+                    &lt;div class=&quot;flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-[11px] font-medium&quot;&gt;
+                        &lt;span class=&quot;max-w-[70px] truncate&quot;&gt;${escapeHtml(displayName)}&lt;/span&gt;
+                        &lt;button onclick=&quot;logoutFirebase()&quot; class=&quot;text-slate-400 hover:text-red-500 ml-1&quot;&gt;&lt;i data-lucide=&quot;log-out&quot; class=&quot;w-3 h-3&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                    &lt;/div&gt;
+                `;
+                await syncCloudData();
+            } else {
+                container.innerHTML = `
+                    &lt;button onclick=&quot;openAuthModal()&quot; class=&quot;flex items-center space-x-1 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold text-[11px] rounded-full border border-indigo-200 dark:border-indigo-800 active:scale-95 transition&quot;&gt;
+                        &lt;i data-lucide=&quot;user&quot; class=&quot;w-3 h-3&quot;&gt;&lt;/i&gt;
+                        &lt;span&gt;ログイン&lt;/span&gt;
+                    &lt;/button&gt;
+                `;
+            }
+            lucide.createIcons();
+        });
+
+        window.loginWithGoogle = async () =&gt; {
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+                closeAuthModal();
+            } catch (err) {
+                alert(&#039;Googleログインエラー: &#039; + err.message);
+            }
+        };
+
+        function formatIdToEmail(id) {
+            return id.includes(&#039;@&#039;) ? id : `${id}@app.local`;
+        }
+
+        window.loginWithId = async () =&gt; {
+            const id = document.getElementById(&#039;auth-userid&#039;).value.trim();
+            const pass = document.getElementById(&#039;auth-password&#039;).value;
+
+            if (id.length &lt; 3) return alert(&#039;IDは3文字以上で入力してください&#039;);
+            if (pass.length &lt; 6) return alert(&#039;パスワードは6文字以上必須です&#039;);
+
+            try {
+                await signInWithEmailAndPassword(auth, formatIdToEmail(id), pass);
+                closeAuthModal();
+            } catch (err) {
+                alert(&#039;ログイン失敗: &#039; + err.message);
+            }
+        };
+
+        window.registerWithId = async () =&gt; {
+            const id = document.getElementById(&#039;auth-userid&#039;).value.trim();
+            const pass = document.getElementById(&#039;auth-password&#039;).value;
+
+            if (id.length &lt; 3) return alert(&#039;IDは3文字以上指定してください&#039;);
+            if (pass.length &lt; 6) return alert(&#039;パスワードは6文字以上必須です&#039;);
+
+            try {
+                await createUserWithEmailAndPassword(auth, formatIdToEmail(id), pass);
+                alert(&#039;アカウント登録完了！&#039;);
+                closeAuthModal();
+            } catch (err) {
+                alert(&#039;登録失敗: &#039; + err.message);
+            }
+        };
+
+        window.logoutFirebase = () =&gt; {
+            if (confirm(&#039;ログアウトしますか？&#039;)) signOut(auth);
+        };
+
+        async function syncCloudData() {
+            if (!window.currentUser) return;
+            const uid = window.currentUser.uid;
+            const docRef = doc(db, &quot;users&quot;, uid);
+
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.memoTitle) {
+                        document.getElementById(&#039;memo-title&#039;).value = data.memoTitle;
+                        localStorage.setItem(`app_memo_title_${uid}`, data.memoTitle);
+                    }
+                    if (data.memoContent) {
+                        document.getElementById(&#039;memo-content&#039;).value = data.memoContent;
+                        localStorage.setItem(`app_memo_content_${uid}`, data.memoContent);
+                        updateMemoStats();
+                    }
+                    if (data.vaultItems) {
+                        window.vaultItems = data.vaultItems;
+                        localStorage.setItem(`app_vault_items_${uid}`, JSON.stringify(data.vaultItems));
+                        renderVault();
+                    }
+                    if (data.savedAssets) {
+                        window.savedAssets = data.savedAssets;
+                        localStorage.setItem(`app_saved_assets_${uid}`, JSON.stringify(data.savedAssets));
+                        renderSavedAssets();
+                    }
+                }
+            } catch (e) {
+                console.error(&quot;Sync error:&quot;, e);
+            }
+        }
+
+        window.saveToCloud = async () =&gt; {
+            if (!window.currentUser) return;
+            const uid = window.currentUser.uid;
+            try {
+                await setDoc(doc(db, &quot;users&quot;, uid), {
+                    memoTitle: document.getElementById(&#039;memo-title&#039;).value,
+                    memoContent: document.getElementById(&#039;memo-content&#039;).value,
+                    vaultItems: window.vaultItems || [],
+                    savedAssets: window.savedAssets || [],
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (e) {
+                console.error(&quot;Save to cloud error:&quot;, e);
+            }
+        };
+    &lt;/script&gt;
+
+    &lt;!-- UI &amp; Cloud Storage Engine Logic --&gt;
+    &lt;script&gt;
+        const titles = { memo: &#039;純粋メモ帳&#039;, converter: &#039;ファイル変換&#039;, image: &#039;画像加工&#039;, code: &#039;コード生成&#039;, saved: &#039;クラウドストレージ&#039; };
+
+        function switchTab(tabId) {
+            document.querySelectorAll(&#039;.tab-content&#039;).forEach(el =&gt; el.classList.add(&#039;hidden&#039;));
+            document.querySelectorAll(&#039;.nav-btn&#039;).forEach(el =&gt; {
+                el.classList.remove(&#039;text-indigo-600&#039;, &#039;dark:text-indigo-400&#039;);
+                el.classList.add(&#039;text-slate-400&#039;);
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove(&#039;hidden&#039;);
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            activeNav.classList.remove(&#039;text-slate-400&#039;);
+            activeNav.classList.add(&#039;text-indigo-600&#039;, &#039;dark:text-indigo-400&#039;);
+
+            document.getElementById(&#039;header-title&#039;).innerText = titles[tabId];
+            if (tabId === &#039;code&#039;) generateCode();
+            if (tabId === &#039;saved&#039;) renderSavedAssets();
+        }
+
+        function toggleDarkMode() { document.documentElement.classList.toggle(&#039;dark&#039;); }
+        function openAuthModal() { document.getElementById(&#039;auth-modal&#039;).classList.remove(&#039;hidden&#039;); }
+        function closeAuthModal() { document.getElementById(&#039;auth-modal&#039;).classList.add(&#039;hidden&#039;); }
+
+        function toggleCustomExt(section) {
+            const select = document.getElementById(`${section}-export-ext`) || document.getElementById(`${section}-ext`);
+            const input = document.getElementById(`${section}-custom-ext`);
+            if (select.value === &#039;custom&#039;) {
+                input.classList.remove(&#039;hidden&#039;);
+            } else {
+                input.classList.add(&#039;hidden&#039;);
+            }
+        }
+
+        function getSelectedExt(section) {
+            const select = document.getElementById(`${section}-export-ext`) || document.getElementById(`${section}-ext`);
+            if (select.value === &#039;custom&#039;) {
+                const customVal = document.getElementById(`${section}-custom-ext`).value.trim();
+                return customVal ? customVal.replace(/^\./, &#039;&#039;) : &#039;txt&#039;;
+            }
+            return select.value;
+        }
+
+        function getMimeTypeByExt(ext) {
+            const mimeTypes = {
+                &#039;txt&#039;: &#039;text/plain;charset=utf-8&#039;,
+                &#039;json&#039;: &#039;application/json;charset=utf-8&#039;,
+                &#039;csv&#039;: &#039;text/csv;charset=utf-8&#039;,
+                &#039;md&#039;: &#039;text/markdown;charset=utf-8&#039;,
+                &#039;html&#039;: &#039;text/html;charset=utf-8&#039;,
+                &#039;xml&#039;: &#039;application/xml;charset=utf-8&#039;,
+                &#039;yaml&#039;: &#039;text/yaml;charset=utf-8&#039;,
+                &#039;tsv&#039;: &#039;text/tab-separated-values;charset=utf-8&#039;,
+                &#039;sql&#039;: &#039;application/sql;charset=utf-8&#039;,
+                &#039;log&#039;: &#039;text/plain;charset=utf-8&#039;
+            };
+            return mimeTypes[ext.toLowerCase()] || &#039;application/octet-stream;charset=utf-8&#039;;
+        }
+
+        function validateAuthInputs() {
+            const id = document.getElementById(&#039;auth-userid&#039;).value.trim();
+            const pass = document.getElementById(&#039;auth-password&#039;).value;
+
+            const idInd = document.getElementById(&#039;id-rule-indicator&#039;);
+            const passInd = document.getElementById(&#039;pass-rule-indicator&#039;);
+
+            idInd.innerText = `${id.length}/3 文字`;
+            idInd.className = id.length &gt;= 3 ? &quot;text-[10px] text-green-500 font-semibold&quot; : &quot;text-[10px] text-slate-400&quot;;
+
+            passInd.innerText = `${pass.length}/6 文字 (必須)`;
+            passInd.className = pass.length &gt;= 6 ? &quot;text-[10px] text-green-500 font-semibold&quot; : &quot;text-[10px] text-slate-400&quot;;
+        }
+
+        function getKey(base) {
+            const uid = window.currentUser ? window.currentUser.uid : &#039;guest&#039;;
+            return `${base}_${uid}`;
+        }
+
+        // --- 1. MEMO LOGIC ---
+        const memoTitle = document.getElementById(&#039;memo-title&#039;);
+        const memoContent = document.getElementById(&#039;memo-content&#039;);
+
+        memoTitle.value = localStorage.getItem(getKey(&#039;app_memo_title&#039;)) || &#039;&#039;;
+        memoContent.value = localStorage.getItem(getKey(&#039;app_memo_content&#039;)) || &#039;&#039;;
+        updateMemoStats();
+
+        let saveTimeout;
+        const triggerSave = () =&gt; {
+            localStorage.setItem(getKey(&#039;app_memo_title&#039;), memoTitle.value);
+            localStorage.setItem(getKey(&#039;app_memo_content&#039;), memoContent.value);
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() =&gt; { if (window.saveToCloud) window.saveToCloud(); }, 1000);
+        };
+
+        memoTitle.addEventListener(&#039;input&#039;, triggerSave);
+        memoContent.addEventListener(&#039;input&#039;, () =&gt; { updateMemoStats(); triggerSave(); });
+
+        function updateMemoStats() {
+            document.getElementById(&#039;memo-char-count&#039;).innerText = `${memoContent.value.length} 文字`;
+        }
+
+        function clearMemo() {
+            if (confirm(&#039;メモをクリアしますか？&#039;)) {
+                memoTitle.value = &#039;&#039;;
+                memoContent.value = &#039;&#039;;
+                localStorage.removeItem(getKey(&#039;app_memo_title&#039;));
+                localStorage.removeItem(getKey(&#039;app_memo_content&#039;));
+                updateMemoStats();
+                if (window.saveToCloud) window.saveToCloud();
+            }
+        }
+
+        function downloadMemo() {
+            const title = memoTitle.value.trim() || &#039;memo&#039;;
+            const ext = getSelectedExt(&#039;memo&#039;);
+            let content = memoContent.value;
+
+            if (ext === &#039;json&#039;) {
+                try {
+                    content = JSON.stringify({ title, content }, null, 2);
+                } catch(e){}
+            } else if (ext === &#039;html&#039;) {
+                content = `&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;&lt;meta charset=&quot;UTF-8&quot;&gt;&lt;title&gt;${escapeHtml(title)}&lt;/title&gt;&lt;/head&gt;\n&lt;body&gt;\n&lt;h1&gt;${escapeHtml(title)}&lt;/h1&gt;\n&lt;pre&gt;${escapeHtml(content)}&lt;/pre&gt;\n&lt;/body&gt;\n&lt;/html&gt;`;
+            }
+
+            const cleanFilename = title.endsWith(`.${ext}`) ? title : `${title}.${ext}`;
+            downloadBlob(content, cleanFilename, getMimeTypeByExt(ext));
+        }
+
+        // --- 2. CONVERTER LOGIC ---
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) =&gt; { document.getElementById(&#039;converter-input&#039;).value = evt.target.result; };
+            reader.readAsText(file);
+        }
+
+        function convertData(type) {
+            const input = document.getElementById(&#039;converter-input&#039;).value;
+            const outputEl = document.getElementById(&#039;converter-output&#039;);
+
+            try {
+                if (type === &#039;json-to-csv&#039;) outputEl.value = Papa.unparse(JSON.parse(input));
+                else if (type === &#039;csv-to-json&#039;) outputEl.value = JSON.stringify(Papa.parse(input, { header: true }).data, null, 2);
+                else if (type === &#039;encode-base64&#039;) outputEl.value = btoa(unescape(encodeURIComponent(input)));
+                else if (type === &#039;decode-base64&#039;) outputEl.value = decodeURIComponent(escape(atob(input)));
+            } catch (err) { alert(&#039;エラー: &#039; + err.message); }
+        }
+
+        function downloadConvertedFile() {
+            const text = document.getElementById(&#039;converter-output&#039;).value;
+            const name = document.getElementById(&#039;converter-filename&#039;).value.trim() || &#039;converted&#039;;
+            const ext = getSelectedExt(&#039;converter&#039;);
+
+            if (!text) return alert(&#039;出力データがありません&#039;);
+
+            const cleanFilename = name.endsWith(`.${ext}`) ? name : `${name}.${ext}`;
+            downloadBlob(text, cleanFilename, getMimeTypeByExt(ext));
+        }
+
+        // --- 3. KEY VAULT LOGIC (SEARCH, GROUPS, TAGS) ---
+        window.vaultItems = JSON.parse(localStorage.getItem(getKey(&#039;app_vault_items&#039;)) || &#039;[]&#039;);
+        let currentVaultGroup = &#039;all&#039;;
+
+        function openVaultModal() {
+            document.getElementById(&#039;vault-modal&#039;).classList.remove(&#039;hidden&#039;);
+            renderVault();
+        }
+
+        function closeVaultModal() {
+            document.getElementById(&#039;vault-modal&#039;).classList.add(&#039;hidden&#039;);
+            closeAddVaultItemForm();
+        }
+
+        function openAddVaultItemForm() {
+            document.getElementById(&#039;vault-add-form&#039;).classList.remove(&#039;hidden&#039;);
+        }
+
+        function closeAddVaultItemForm() {
+            document.getElementById(&#039;vault-add-form&#039;).classList.add(&#039;hidden&#039;);
+        }
+
+        function setVaultGroup(group) {
+            currentVaultGroup = group;
+            document.querySelectorAll(&#039;.vault-group-filter-btn&#039;).forEach(b =&gt; {
+                b.classList.remove(&#039;bg-indigo-600&#039;, &#039;text-white&#039;);
+                b.classList.add(&#039;bg-slate-100&#039;, &#039;dark:bg-slate-800&#039;, &#039;text-slate-600&#039;, &#039;dark:text-slate-300&#039;);
+            });
+            const activeBtn = document.getElementById(`vault-group-btn-${group}`);
+            if (activeBtn) {
+                activeBtn.classList.remove(&#039;bg-slate-100&#039;, &#039;dark:bg-slate-800&#039;, &#039;text-slate-600&#039;, &#039;dark:text-slate-300&#039;);
+                activeBtn.classList.add(&#039;bg-indigo-600&#039;, &#039;text-white&#039;);
+            }
+            renderVault();
+        }
+
+        function renderVault() {
+            const container = document.getElementById(&#039;vault-list&#039;);
+            const searchQuery = (document.getElementById(&#039;vault-search-input&#039;)?.value || &#039;&#039;).toLowerCase();
+            container.innerHTML = &#039;&#039;;
+
+            const filtered = window.vaultItems.filter(item =&gt; {
+                const groupMatch = currentVaultGroup === &#039;all&#039; || (item.group || &#039;other&#039;) === currentVaultGroup;
+                const searchMatch = !searchQuery || item.title.toLowerCase().includes(searchQuery) || item.value.toLowerCase().includes(searchQuery);
+                return groupMatch &amp;&amp; searchMatch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `&lt;div class=&quot;text-center py-6 text-slate-400 text-xs&quot;&gt;保管されているデータはありません&lt;/div&gt;`;
+                return;
+            }
+
+            filtered.forEach((item, index) =&gt; {
+                const card = document.createElement(&#039;div&#039;);
+                card.className = &quot;bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2.5 shadow-sm space-y-1.5&quot;;
+                const displayVal = item.masked ? &#039;•&#039;.repeat(Math.min(item.value.length, 16)) : item.value;
+                const tagsHtml = (item.tags || []).map(t =&gt; `&lt;span class=&quot;bg-slate-100 dark:bg-slate-800 text-[9px] px-1.5 py-0.5 rounded text-indigo-500 font-medium&quot;&gt;#${escapeHtml(t)}&lt;/span&gt;`).join(&#039; &#039;);
+
+                card.innerHTML = `
+                    &lt;div class=&quot;flex justify-between items-center&quot;&gt;
+                        &lt;div&gt;
+                            &lt;span class=&quot;font-bold text-xs truncate block&quot;&gt;${escapeHtml(item.title)}&lt;/span&gt;
+                            &lt;div class=&quot;flex items-center space-x-1 mt-0.5&quot;&gt;${tagsHtml}&lt;/div&gt;
+                        &lt;/div&gt;
+                        &lt;button onclick=&quot;deleteVaultItem(${index})&quot; class=&quot;text-slate-400 p-0.5 hover:text-red-500&quot;&gt;&lt;i data-lucide=&quot;trash-2&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&quot;bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-[11px] code-font break-all&quot;&gt;${escapeHtml(displayVal)}&lt;/div&gt;
+                    &lt;div class=&quot;flex space-x-1.5 pt-0.5&quot;&gt;
+                        &lt;button onclick=&quot;toggleVaultMask(${index})&quot; class=&quot;flex-1 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-semibold text-slate-600 dark:text-slate-300&quot;&gt;${item.masked ? &#039;表示&#039; : &#039;隠す&#039;}&lt;/button&gt;
+                        &lt;button onclick=&quot;copyToClipboard(&#039;${escapeJs(item.value)}&#039;)&quot; class=&quot;flex-1 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-semibold&quot;&gt;コピー&lt;/button&gt;
+                    &lt;/div&gt;
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function saveVaultItem() {
+            const title = document.getElementById(&#039;vault-input-title&#039;).value.trim();
+            const value = document.getElementById(&#039;vault-input-value&#039;).value;
+            const group = document.getElementById(&#039;vault-input-group&#039;).value;
+            const rawTags = document.getElementById(&#039;vault-input-tags&#039;).value;
+            const tags = rawTags ? rawTags.split(&#039;,&#039;).map(t =&gt; t.trim()).filter(t =&gt; t.length &gt; 0) : [];
+            const masked = document.getElementById(&#039;vault-input-mask&#039;).checked;
+
+            if (!title || !value) return alert(&#039;タイトルと内容を入力してください&#039;);
+
+            window.vaultItems.push({ title, value, group, tags, masked });
+            localStorage.setItem(getKey(&#039;app_vault_items&#039;), JSON.stringify(window.vaultItems));
+            if (window.saveToCloud) window.saveToCloud();
+
+            document.getElementById(&#039;vault-input-title&#039;).value = &#039;&#039;;
+            document.getElementById(&#039;vault-input-value&#039;).value = &#039;&#039;;
+            document.getElementById(&#039;vault-input-tags&#039;).value = &#039;&#039;;
+            closeAddVaultItemForm();
+            renderVault();
+        }
+
+        function toggleVaultMask(index) { 
+            window.vaultItems[index].masked = !window.vaultItems[index].masked; 
+            renderVault(); 
+        }
+
+        function deleteVaultItem(index) { 
+            if (confirm(&#039;削除しますか？&#039;)) { 
+                window.vaultItems.splice(index, 1); 
+                localStorage.setItem(getKey(&#039;app_vault_items&#039;), JSON.stringify(window.vaultItems)); 
+                if (window.saveToCloud) window.saveToCloud();
+                renderVault(); 
+            } 
+        }
+
+        // --- 4. IMAGE LOGIC ---
+        let currentLoadedImage = null;
+
+        function loadImage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) =&gt; {
+                const img = new Image();
+                img.onload = () =&gt; {
+                    currentLoadedImage = img;
+                    document.getElementById(&#039;img-width&#039;).value = img.width;
+                    document.getElementById(&#039;img-height&#039;).value = img.height;
+                    document.getElementById(&#039;image-preview&#039;).src = evt.target.result;
+                    document.getElementById(&#039;image-preview-container&#039;).classList.remove(&#039;hidden&#039;);
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleDimensionChange(type) {
+            if (!currentLoadedImage || !document.getElementById(&#039;img-aspect-ratio&#039;).checked) return;
+            const ratio = currentLoadedImage.width / currentLoadedImage.height;
+            if (type === &#039;w&#039;) document.getElementById(&#039;img-height&#039;).value = Math.round(document.getElementById(&#039;img-width&#039;).value / ratio);
+            else document.getElementById(&#039;img-width&#039;).value = Math.round(document.getElementById(&#039;img-height&#039;).value * ratio);
+        }
+
+        function processAndDownloadImage() {
+            if (!currentLoadedImage) return alert(&#039;画像を選択してください&#039;);
+
+            const canvas = document.createElement(&#039;canvas&#039;);
+            const w = parseInt(document.getElementById(&#039;img-width&#039;).value);
+            const h = parseInt(document.getElementById(&#039;img-height&#039;).value);
+            const format = document.getElementById(&#039;img-format&#039;).value;
+
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext(&#039;2d&#039;).drawImage(currentLoadedImage, 0, 0, w, h);
+
+            const ext = format.split(&#039;/&#039;)[1] || &#039;png&#039;;
+            canvas.toBlob((blob) =&gt; {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement(&#039;a&#039;);
+                a.href = url;
+                a.download = `processed_image.${ext}`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }, format);
+        }
+
+        // --- 5. CODE / QR LOGIC ---
+        let currentCodeType = &#039;qr&#039;;
+        let overlayLogoImage = null;
+
+        function loadLogoImage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) =&gt; {
+                const img = new Image();
+                img.onload = () =&gt; {
+                    overlayLogoImage = img;
+                    generateCode();
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearLogoImage() {
+            overlayLogoImage = null;
+            document.getElementById(&#039;qr-logo-input&#039;).value = &#039;&#039;;
+            generateCode();
+        }
+
+        function setCodeType(type) {
+            currentCodeType = type;
+            document.querySelectorAll(&#039;.code-type-btn&#039;).forEach(b =&gt; b.classList.remove(&#039;bg-white&#039;, &#039;dark:bg-slate-900&#039;, &#039;shadow-sm&#039;, &#039;text-indigo-600&#039;));
+            
+            if (type === &#039;qr&#039;) {
+                document.getElementById(&#039;btn-type-qr&#039;).classList.add(&#039;bg-white&#039;, &#039;dark:bg-slate-900&#039;, &#039;shadow-sm&#039;, &#039;text-indigo-600&#039;);
+                document.getElementById(&#039;qr-style-options&#039;).classList.remove(&#039;hidden&#039;);
+                document.getElementById(&#039;barcode-style-options&#039;).classList.add(&#039;hidden&#039;);
+            } else {
+                document.getElementById(&#039;btn-type-barcode&#039;).classList.add(&#039;bg-white&#039;, &#039;dark:bg-slate-900&#039;, &#039;shadow-sm&#039;, &#039;text-indigo-600&#039;);
+                document.getElementById(&#039;qr-style-options&#039;).classList.add(&#039;hidden&#039;);
+                document.getElementById(&#039;barcode-style-options&#039;).classList.remove(&#039;hidden&#039;);
+            }
+            generateCode();
+        }
+
+        function isFinderEye(r, c, count) {
+            if (r &lt; 7 &amp;&amp; c &lt; 7) return true;
+            if (r &lt; 7 &amp;&amp; c &gt;= count - 7) return true;
+            if (r &gt;= count - 7 &amp;&amp; c &lt; 7) return true;
+            return false;
+        }
+
+        function generateCode() {
+            const text = document.getElementById(&#039;code-text&#039;).value.trim() || &#039;https://example.com&#039;;
+            document.getElementById(&#039;code-text-length&#039;).innerText = `${text.length} 文字`;
+
+            const canvas = document.getElementById(&#039;code-canvas&#039;);
+            const svg = document.getElementById(&#039;barcode-svg&#039;);
+
+            if (currentCodeType === &#039;qr&#039;) {
+                canvas.classList.remove(&#039;hidden&#039;);
+                svg.classList.add(&#039;hidden&#039;);
+
+                const dotStyle = document.getElementById(&#039;qr-dot-style&#039;).value;
+                const fgColor = document.getElementById(&#039;qr-fg-color&#039;).value;
+                const gradColor = document.getElementById(&#039;qr-grad-color&#039;).value;
+                const eyeColor = document.getElementById(&#039;qr-eye-color&#039;).value;
+                const bgColor = document.getElementById(&#039;qr-bg-color&#039;).value;
+                const useGradient = document.getElementById(&#039;qr-use-gradient&#039;).checked;
+
+                try {
+                    const qr = qrcode(0, &#039;H&#039;);
+                    qr.addData(text);
+                    qr.make();
+
+                    const count = qr.getModuleCount();
+                    const cellSize = 8;
+                    const margin = 20;
+                    const size = count * cellSize + margin * 2;
+
+                    canvas.width = size;
+                    canvas.height = size;
+
+                    const ctx = canvas.getContext(&#039;2d&#039;);
+                    ctx.fillStyle = bgColor;
+                    ctx.fillRect(0, 0, size, size);
+
+                    let bodyFillStyle = fgColor;
+                    if (useGradient) {
+                        const grad = ctx.createLinearGradient(0, 0, size, size);
+                        grad.addColorStop(0, fgColor);
+                        grad.addColorStop(1, gradColor);
+                        bodyFillStyle = grad;
+                    }
+
+                    for (let r = 0; r &lt; count; r++) {
+                        for (let c = 0; c &lt; count; c++) {
+                            if (qr.isDark(r, c) &amp;&amp; !isFinderEye(r, c, count)) {
+                                const x = c * cellSize + margin;
+                                const y = r * cellSize + margin;
+                                ctx.fillStyle = bodyFillStyle;
+                                drawCustomDot(ctx, x, y, cellSize, dotStyle);
+                            }
+                        }
+                    }
+
+                    drawEyePattern(ctx, margin, margin, cellSize, eyeColor);
+                    drawEyePattern(ctx, (count - 7) * cellSize + margin, margin, cellSize, eyeColor);
+                    drawEyePattern(ctx, margin, (count - 7) * cellSize + margin, cellSize, eyeColor);
+
+                    if (overlayLogoImage) {
+                        const logoSize = size * 0.22;
+                        const logoX = (size - logoSize) / 2;
+                        const logoY = (size - logoSize) / 2;
+
+                        ctx.fillStyle = bgColor;
+                        ctx.beginPath();
+                        ctx.roundRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8, 8);
+                        ctx.fill();
+
+                        ctx.drawImage(overlayLogoImage, logoX, logoY, logoSize, logoSize);
+                    }
+                } catch (e) {}
+            } else {
+                canvas.classList.add(&#039;hidden&#039;);
+                svg.classList.remove(&#039;hidden&#039;);
+                try {
+                    JsBarcode(&quot;#barcode-svg&quot;, text, {
+                        format: document.getElementById(&#039;barcode-format&#039;).value,
+                        lineColor: &quot;#000&quot;,
+                        width: 1.8,
+                        height: 50,
+                        displayValue: true
+                    });
+                } catch (e) {}
+            }
+        }
+
+        function drawCustomDot(ctx, x, y, s, style) {
+            ctx.beginPath();
+            if (style === &#039;dots&#039;) {
+                ctx.arc(x + s / 2, y + s / 2, s / 2.2, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (style === &#039;rounded&#039;) {
+                ctx.roundRect(x, y, s, s, s * 0.3);
+                ctx.fill();
+            } else if (style === &#039;wave&#039;) {
+                ctx.arc(x + s / 2, y + s / 2, s / 2, 0, Math.PI);
+                ctx.fill();
+            } else if (style === &#039;liquid&#039;) {
+                ctx.roundRect(x, y, s, s, [s * 0.5, 0, s * 0.5, 0]);
+                ctx.fill();
+            } else if (style === &#039;line&#039;) {
+                ctx.fillRect(x + s * 0.2, y, s * 0.6, s);
+            } else if (style === &#039;cross&#039;) {
+                ctx.fillRect(x + s * 0.3, y, s * 0.4, s);
+                ctx.fillRect(x, y + s * 0.3, s, s * 0.4);
+            } else if (style === &#039;hexagon&#039;) {
+                ctx.moveTo(x + s / 2, y);
+                ctx.lineTo(x + s, y + s / 4);
+                ctx.lineTo(x + s, y + s * 3 / 4);
+                ctx.lineTo(x + s / 2, y + s);
+                ctx.lineTo(x, y + s * 3 / 4);
+                ctx.lineTo(x, y + s / 4);
+                ctx.closePath();
+                ctx.fill();
+            } else if (style === &#039;diamond&#039;) {
+                ctx.moveTo(x + s / 2, y);
+                ctx.lineTo(x + s, y + s / 2);
+                ctx.lineTo(x + s / 2, y + s);
+                ctx.lineTo(x, y + s / 2);
+                ctx.closePath();
+                ctx.fill();
+            } else if (style === &#039;star&#039;) {
+                drawStar(ctx, x + s/2, y + s/2, 5, s/2, s/4);
+            } else {
+                ctx.fillRect(x, y, s, s);
+            }
+        }
+
+        function drawEyePattern(ctx, x, y, cellSize, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(x, y, 7 * cellSize, 7 * cellSize, cellSize * 1.5);
+            ctx.fill();
+
+            ctx.fillStyle = document.getElementById(&#039;qr-bg-color&#039;).value;
+            ctx.beginPath();
+            ctx.roundRect(x + cellSize, y + cellSize, 5 * cellSize, 5 * cellSize, cellSize);
+            ctx.fill();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(x + 2 * cellSize, y + 2 * cellSize, 3 * cellSize, 3 * cellSize, cellSize * 0.8);
+            ctx.fill();
+        }
+
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx, y = cy, step = Math.PI / spikes;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            for (let i = 0; i &lt; spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function downloadCodeImage() {
+            if (currentCodeType === &#039;qr&#039;) {
+                const canvas = document.getElementById(&#039;code-canvas&#039;);
+                const a = document.createElement(&#039;a&#039;);
+                a.href = canvas.toDataURL(&#039;image/png&#039;);
+                a.download = &#039;pro_qrcode.png&#039;;
+                a.click();
+            } else {
+                const svg = document.getElementById(&#039;barcode-svg&#039;);
+                const xml = new XMLSerializer().serializeToString(svg);
+                const svgBlob = new Blob([xml], { type: &#039;image/svg+xml;charset=utf-8&#039; });
+                const url = URL.createObjectURL(svgBlob);
+                
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement(&#039;canvas&#039;);
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    canvas.getContext(&#039;2d&#039;).drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+
+                    const a = document.createElement(&#039;a&#039;);
+                    a.href = canvas.toDataURL(&#039;image/png&#039;);
+                    a.download = &#039;barcode.png&#039;;
+                    a.click();
+                };
+                img.src = url;
+            }
+        }
+
+        // --- 6. ADVANCED CLOUD STORAGE SYSTEM (GROUPS, TAGS, SEARCH) ---
+        window.savedAssets = JSON.parse(localStorage.getItem(getKey(&#039;app_saved_assets&#039;)) || &#039;[]&#039;);
+        let currentStorageGroup = &#039;all&#039;;
+        let currentSelectedTag = null;
+
+        let pendingSaveData = null;
+
+        function openSaveModal(source) {
+            pendingSaveData = source;
+            const modal = document.getElementById(&#039;save-meta-modal&#039;);
+            const titleInput = document.getElementById(&#039;save-modal-title&#039;);
+            const groupSelect = document.getElementById(&#039;save-modal-group&#039;);
+
+            if (source === &#039;memo&#039;) {
+                const ext = getSelectedExt(&#039;memo&#039;);
+                titleInput.value = memoTitle.value.trim() || `無題メモ.${ext}`;
+                groupSelect.value = &#039;memo&#039;;
+            } else if (source === &#039;converter&#039;) {
+                const ext = getSelectedExt(&#039;converter&#039;);
+                titleInput.value = document.getElementById(&#039;converter-filename&#039;).value.trim() || `変換データ.${ext}`;
+                groupSelect.value = &#039;text&#039;;
+            } else if (source === &#039;image&#039;) {
+                const format = document.getElementById(&#039;img-format&#039;).value;
+                const ext = format.split(&#039;/&#039;)[1] || &#039;png&#039;;
+                titleInput.value = `加工画像.${ext}`;
+                groupSelect.value = &#039;media&#039;;
+            } else if (source === &#039;code&#039;) {
+                titleInput.value = &#039;生成コード.png&#039;;
+                groupSelect.value = &#039;media&#039;;
+            }
+
+            document.getElementById(&#039;save-modal-tags&#039;).value = &#039;&#039;;
+            modal.classList.remove(&#039;hidden&#039;);
+        }
+
+        function closeSaveModal() {
+            document.getElementById(&#039;save-meta-modal&#039;).classList.add(&#039;hidden&#039;);
+            pendingSaveData = null;
+        }
+
+        function confirmSaveToApp() {
+            const rawTitle = document.getElementById(&#039;save-modal-title&#039;).value.trim() || &#039;無題アイテム&#039;;
+            const group = document.getElementById(&#039;save-modal-group&#039;).value;
+            const rawTags = document.getElementById(&#039;save-modal-tags&#039;).value;
+            const tags = rawTags ? rawTags.split(&#039;,&#039;).map(t =&gt; t.trim()).filter(t =&gt; t.length &gt; 0) : [];
+
+            let newItem = { type: group, tags, date: new Date().toLocaleDateString() };
+
+            if (pendingSaveData === &#039;memo&#039;) {
+                const ext = getSelectedExt(&#039;memo&#039;);
+                newItem.ext = ext;
+                newItem.title = rawTitle.endsWith(`.${ext}`) ? rawTitle : `${rawTitle}.${ext}`;
+                newItem.content = memoContent.value;
+            } else if (pendingSaveData === &#039;converter&#039;) {
+                const ext = getSelectedExt(&#039;converter&#039;);
+                newItem.ext = ext;
+                newItem.title = rawTitle.endsWith(`.${ext}`) ? rawTitle : `${rawTitle}.${ext}`;
+                newItem.content = document.getElementById(&#039;converter-output&#039;).value;
+            } else if (pendingSaveData === &#039;image&#039;) {
+                const canvas = document.createElement(&#039;canvas&#039;);
+                const w = parseInt(document.getElementById(&#039;img-width&#039;).value);
+                const h = parseInt(document.getElementById(&#039;img-height&#039;).value);
+                const format = document.getElementById(&#039;img-format&#039;).value;
+                const ext = format.split(&#039;/&#039;)[1] || &#039;png&#039;;
+                canvas.width = w; canvas.height = h;
+                canvas.getContext(&#039;2d&#039;).drawImage(currentLoadedImage, 0, 0, w, h);
+                newItem.ext = ext;
+                newItem.title = rawTitle.endsWith(`.${ext}`) ? rawTitle : `${rawTitle}.${ext}`;
+                newItem.data = canvas.toDataURL(format);
+            } else if (pendingSaveData === &#039;code&#039;) {
+                const canvas = document.getElementById(&#039;code-canvas&#039;);
+                newItem.ext = &#039;png&#039;;
+                newItem.title = rawTitle.endsWith(&#039;.png&#039;) ? rawTitle : `${rawTitle}.png`;
+                newItem.data = canvas.toDataURL(&#039;image/png&#039;);
+            }
+
+            window.savedAssets.push(newItem);
+            localStorage.setItem(getKey(&#039;app_saved_assets&#039;), JSON.stringify(window.savedAssets));
+            if (window.saveToCloud) window.saveToCloud();
+
+            closeSaveModal();
+            alert(&#039;クラウドストレージに保存しました！&#039;);
+        }
+
+        function setStorageGroup(group) {
+            currentStorageGroup = group;
+            document.querySelectorAll(&#039;.group-filter-btn&#039;).forEach(b =&gt; {
+                b.classList.remove(&#039;bg-indigo-600&#039;, &#039;text-white&#039;);
+                b.classList.add(&#039;bg-slate-100&#039;, &#039;dark:bg-slate-800&#039;, &#039;text-slate-600&#039;, &#039;dark:text-slate-300&#039;);
+            });
+            document.getElementById(`group-btn-${group}`).classList.remove(&#039;bg-slate-100&#039;, &#039;dark:bg-slate-800&#039;, &#039;text-slate-600&#039;, &#039;dark:text-slate-300&#039;);
+            document.getElementById(`group-btn-${group}`).classList.add(&#039;bg-indigo-600&#039;, &#039;text-white&#039;);
+            renderSavedAssets();
+        }
+
+        function filterByTag(tag) {
+            currentSelectedTag = currentSelectedTag === tag ? null : tag;
+            renderSavedAssets();
+        }
+
+        function renderSavedAssets() {
+            const container = document.getElementById(&#039;saved-assets-list&#039;);
+            const tagsContainer = document.getElementById(&#039;storage-tags-filter&#039;);
+            const countEl = document.getElementById(&#039;saved-assets-count&#039;);
+            const searchQuery = document.getElementById(&#039;storage-search-input&#039;).value.toLowerCase();
+
+            container.innerHTML = &#039;&#039;;
+            tagsContainer.innerHTML = &#039;&#039;;
+
+            const allTags = [...new Set(window.savedAssets.flatMap(item =&gt; item.tags || []))];
+            
+            if (allTags.length &gt; 0) {
+                allTags.forEach(tag =&gt; {
+                    const active = currentSelectedTag === tag;
+                    const chip = document.createElement(&#039;button&#039;);
+                    chip.className = `px-2 py-0.5 rounded-md text-[10px] font-medium transition ${active ? &#039;bg-indigo-600 text-white&#039; : &#039;bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200&#039;}`;
+                    chip.innerText = `#${tag}`;
+                    chip.onclick = () =&gt; filterByTag(tag);
+                    tagsContainer.appendChild(chip);
+                });
+            } else {
+                tagsContainer.innerHTML = `&lt;span class=&quot;text-[10px] text-slate-400&quot;&gt;タグ未設定&lt;/span&gt;`;
+            }
+
+            const filtered = window.savedAssets.filter(item =&gt; {
+                const matchesGroup = currentStorageGroup === &#039;all&#039; || item.type === currentStorageGroup;
+                const matchesTag = !currentSelectedTag || (item.tags &amp;&amp; item.tags.includes(currentSelectedTag));
+                const matchesSearch = !searchQuery || item.title.toLowerCase().includes(searchQuery) || (item.content &amp;&amp; item.content.toLowerCase().includes(searchQuery));
+                return matchesGroup &amp;&amp; matchesTag &amp;&amp; matchesSearch;
+            });
+
+            countEl.innerText = `${filtered.length} 件`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `&lt;div class=&quot;text-center py-8 text-slate-400 text-xs&quot;&gt;該当する保存データはありません&lt;/div&gt;`;
+                return;
+            }
+
+            filtered.forEach((item, index) =&gt; {
+                const card = document.createElement(&#039;div&#039;);
+                card.className = &quot;bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2.5 shadow-sm space-y-2&quot;;
+
+                const tagsHtml = (item.tags || []).map(t =&gt; `&lt;span class=&quot;bg-slate-100 dark:bg-slate-800 text-[9px] px-1.5 py-0.5 rounded text-indigo-500 font-medium&quot;&gt;#${escapeHtml(t)}&lt;/span&gt;`).join(&#039; &#039;);
+
+                if (item.type === &#039;media&#039;) {
+                    card.innerHTML = `
+                        &lt;div class=&quot;flex items-center justify-between&quot;&gt;
+                            &lt;div class=&quot;flex items-center space-x-2.5&quot;&gt;
+                                &lt;img src=&quot;${item.data}&quot; class=&quot;w-10 h-10 object-contain rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800&quot;&gt;
+                                &lt;div&gt;
+                                    &lt;h4 class=&quot;font-bold text-xs max-w-[150px] truncate&quot;&gt;${escapeHtml(item.title)}&lt;/h4&gt;
+                                    &lt;div class=&quot;flex items-center space-x-1 mt-0.5&quot;&gt;
+                                        &lt;span class=&quot;text-[10px] text-slate-400&quot;&gt;${item.date}&lt;/span&gt;
+                                        ${tagsHtml}
+                                    &lt;/div&gt;
+                                &lt;/div&gt;
+                            &lt;/div&gt;
+                            &lt;div class=&quot;flex items-center space-x-1&quot;&gt;
+                                &lt;a href=&quot;${item.data}&quot; download=&quot;${escapeHtml(item.title)}&quot; class=&quot;p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg&quot;&gt;&lt;i data-lucide=&quot;download&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;&lt;/a&gt;
+                                &lt;button onclick=&quot;deleteSavedAsset(${index})&quot; class=&quot;p-1.5 text-slate-400 hover:text-red-500 rounded-lg&quot;&gt;&lt;i data-lucide=&quot;trash-2&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                            &lt;/div&gt;
+                        &lt;/div&gt;
+                    `;
+                } else {
+                    const itemExt = item.ext || &#039;txt&#039;;
+                    card.innerHTML = `
+                        &lt;div class=&quot;flex items-center justify-between&quot;&gt;
+                            &lt;div&gt;
+                                &lt;h4 class=&quot;font-bold text-xs max-w-[180px] truncate&quot;&gt;${escapeHtml(item.title)}&lt;/h4&gt;
+                                &lt;div class=&quot;flex items-center space-x-1 mt-0.5&quot;&gt;
+                                    &lt;span class=&quot;text-[10px] text-slate-400&quot;&gt;${item.date}&lt;/span&gt;
+                                    ${tagsHtml}
+                                &lt;/div&gt;
+                            &lt;/div&gt;
+                            &lt;div class=&quot;flex items-center space-x-1&quot;&gt;
+                                &lt;button onclick=&quot;copyToClipboard(&#039;${escapeJs(item.content)}&#039;)&quot; class=&quot;p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg&quot;&gt;&lt;i data-lucide=&quot;copy&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                                &lt;button onclick=&quot;downloadStorageTextItem(&#039;${escapeJs(item.content)}&#039;, &#039;${escapeJs(item.title)}&#039;, &#039;${escapeJs(itemExt)}&#039;)&quot; class=&quot;p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg&quot;&gt;&lt;i data-lucide=&quot;download&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                                &lt;button onclick=&quot;deleteSavedAsset(${index})&quot; class=&quot;p-1.5 text-slate-400 hover:text-red-500 rounded-lg&quot;&gt;&lt;i data-lucide=&quot;trash-2&quot; class=&quot;w-3.5 h-3.5&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+                            &lt;/div&gt;
+                        &lt;/div&gt;
+                        &lt;div class=&quot;bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-[11px] code-font max-h-20 overflow-y-auto break-all&quot;&gt;${escapeHtml(item.content)}&lt;/div&gt;
+                    `;
+                }
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function downloadStorageTextItem(content, title, ext) {
+            const cleanFilename = title.endsWith(`.${ext}`) ? title : `${title}.${ext}`;
+            downloadBlob(content, cleanFilename, getMimeTypeByExt(ext));
+        }
+
+        function deleteSavedAsset(index) {
+            if (confirm(&#039;削除しますか？&#039;)) {
+                window.savedAssets.splice(index, 1);
+                localStorage.setItem(getKey(&#039;app_saved_assets&#039;), JSON.stringify(window.savedAssets));
+                if (window.saveToCloud) window.saveToCloud();
+                renderSavedAssets();
+            }
+        }
+
+        // --- Helpers ---
+        function downloadBlob(content, filename, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement(&#039;a&#039;);
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() =&gt; alert(&#039;コピーしました&#039;));
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&amp;&lt;&gt;&quot;&#039;]/g, m =&gt; ({ &#039;&amp;&#039;: &#039;&amp;amp;&#039;, &#039;&lt;&#039;: &#039;&amp;lt;&#039;, &#039;&gt;&#039;: &#039;&amp;gt;&#039;, &#039;&quot;&#039;: &#039;&amp;quot;&#039;, &quot;&#039;&quot;: &#039;&amp;#039;&#039; }[m]));
+        }
+
+        function escapeJs(str) {
+            return str.replace(/\\/g, &#039;\\\\&#039;).replace(/&#039;/g, &quot;\\&#039;&quot;).replace(/&quot;/g, &#039;\\&quot;&#039;).replace(/\n/g, &#039;\\n&#039;);
+        }
+
+        window.onload = () =&gt; {
+            lucide.createIcons();
+            switchTab(&#039;memo&#039;);
+            setCodeType(&#039;qr&#039;);
+        };
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</body>
+</html>
