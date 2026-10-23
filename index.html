@@ -36,14 +36,19 @@
     <header class="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
         <div class="flex items-center space-x-1.5">
             <div class="p-1 bg-indigo-600 text-white rounded-md">
-                <i data-lucide="cloud" class="w-4 h-4"></i>
+                <i data-lucide="zap" class="w-4 h-4"></i>
             </div>
             <h1 class="font-bold text-sm tracking-tight" id="header-title">メモ帳</h1>
         </div>
         
         <div class="flex items-center space-x-1.5">
-            <!-- Header Key / Vault Button (Quick Access) -->
-            <button onclick="openVaultModal()" class="p-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 active:scale-95 transition flex items-center justify-center" title="キー保管庫を開く">
+            <!-- Header Storage / Cloud Button -->
+            <button onclick="openStorageModal()" class="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 active:scale-95 transition flex items-center justify-center" title="クラウドストレージ">
+                <i data-lucide="folder-kanban" class="w-3.5 h-3.5"></i>
+            </button>
+
+            <!-- Header Key / Vault Button -->
+            <button onclick="openVaultModal()" class="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 active:scale-95 transition flex items-center justify-center" title="キー保管庫">
                 <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
             </button>
 
@@ -339,38 +344,9 @@
             </div>
         </section>
 
-        <!-- 5. CLOUD STORAGE TAB -->
-        <section id="tab-saved" class="tab-content hidden space-y-3">
-            <div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5">
-                <div class="flex justify-between items-center">
-                    <span class="font-bold text-xs">クラウドストレージ</span>
-                    <span id="saved-assets-count" class="text-[10px] bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold">0 件</span>
-                </div>
-
-                <!-- Search Input -->
-                <div class="relative">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
-                    <input type="text" id="storage-search-input" placeholder="タイトルや内容で検索..." oninput="renderSavedAssets()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] pl-8 pr-3 py-1.5 focus:outline-none">
-                </div>
-
-                <!-- Category / Group Filter Tabs -->
-                <div class="flex space-x-1 overflow-x-auto no-scrollbar pb-1 text-[11px]">
-                    <button onclick="setStorageGroup('all')" id="group-btn-all" class="group-filter-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold whitespace-nowrap">すべて</button>
-                    <button onclick="setStorageGroup('memo')" id="group-btn-memo" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">メモ</button>
-                    <button onclick="setStorageGroup('text')" id="group-btn-text" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">テキスト・変換</button>
-                    <button onclick="setStorageGroup('media')" id="group-btn-media" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">画像・QR</button>
-                </div>
-
-                <!-- Tag Cloud Container -->
-                <div id="storage-tags-filter" class="flex flex-wrap gap-1 pt-1 border-t border-slate-100 dark:border-slate-800"></div>
-            </div>
-
-            <div id="saved-assets-list" class="space-y-2"></div>
-        </section>
-
     </main>
 
-    <!-- Bottom Navigation Bar (4 Compact Tabs) -->
+    <!-- Bottom Navigation Bar (4 Main Tabs) -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 z-30">
         <div class="max-w-md mx-auto grid grid-cols-4 gap-1">
             <button onclick="switchTab('memo')" id="nav-memo" class="nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-indigo-600 dark:text-indigo-400">
@@ -389,14 +365,46 @@
                 <i data-lucide="qr-code" class="w-4 h-4"></i>
                 <span class="text-[9px] mt-0.5 font-medium">コード</span>
             </button>
-            <button onclick="switchTab('saved')" id="nav-saved" class="nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-slate-400">
-                <i data-lucide="cloud" class="w-4 h-4"></i>
-                <span class="text-[9px] mt-0.5 font-medium">ストレージ</span>
-            </button>
         </div>
     </nav>
 
-    <!-- Key Vault Modal (Quick Header Access) -->
+    <!-- Cloud Storage Modal (Header Access) -->
+    <div id="storage-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-4 w-full max-w-md shadow-2xl space-y-3 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                <div class="flex items-center space-x-1.5">
+                    <i data-lucide="folder-kanban" class="w-4 h-4 text-indigo-600"></i>
+                    <h3 class="text-sm font-bold">クラウドストレージ</h3>
+                </div>
+                <button onclick="closeStorageModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- Search & Group Filters -->
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span id="saved-assets-count" class="text-[10px] bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold">0 件</span>
+                </div>
+                <div class="relative">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                    <input type="text" id="storage-search-input" placeholder="タイトルや内容で検索..." oninput="renderSavedAssets()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] pl-8 pr-3 py-1.5 focus:outline-none">
+                </div>
+
+                <div class="flex space-x-1 overflow-x-auto no-scrollbar pb-1 text-[11px]">
+                    <button onclick="setStorageGroup('all')" id="group-btn-all" class="group-filter-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold whitespace-nowrap">すべて</button>
+                    <button onclick="setStorageGroup('memo')" id="group-btn-memo" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">メモ</button>
+                    <button onclick="setStorageGroup('text')" id="group-btn-text" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">テキスト・変換</button>
+                    <button onclick="setStorageGroup('media')" id="group-btn-media" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">画像・QR</button>
+                </div>
+
+                <div id="storage-tags-filter" class="flex flex-wrap gap-1 pt-1 border-t border-slate-100 dark:border-slate-800"></div>
+            </div>
+
+            <!-- Storage Assets List Container -->
+            <div id="saved-assets-list" class="flex-1 overflow-y-auto space-y-2 pr-0.5"></div>
+        </div>
+    </div>
+
+    <!-- Key Vault Modal (Header Access) -->
     <div id="vault-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center">
         <div class="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-4 w-full max-w-md shadow-2xl space-y-3 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -407,7 +415,6 @@
                 <button onclick="closeVaultModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
 
-            <!-- Vault Controls (Search, Group, New Item Button) -->
             <div class="space-y-2">
                 <div class="flex space-x-1.5">
                     <div class="relative flex-1">
@@ -420,7 +427,6 @@
                     </button>
                 </div>
 
-                <!-- Group Tabs -->
                 <div class="flex space-x-1 overflow-x-auto no-scrollbar text-[10px]">
                     <button onclick="setVaultGroup('all')" id="vault-group-btn-all" class="vault-group-filter-btn px-2 py-0.5 rounded-md bg-indigo-600 text-white font-semibold whitespace-nowrap">すべて</button>
                     <button onclick="setVaultGroup('api')" id="vault-group-btn-api" class="vault-group-filter-btn px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">APIキー</button>
@@ -430,7 +436,6 @@
                 </div>
             </div>
 
-            <!-- Add New Vault Form (Collapsible) -->
             <div id="vault-add-form" class="hidden bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
                 <span class="text-[10px] font-bold text-slate-400 uppercase block">新規キー登録</span>
                 <input type="text" id="vault-input-title" placeholder="タイトル・用途 (例: OpenAI API Key)" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2 focus:outline-none">
@@ -458,7 +463,6 @@
                 </div>
             </div>
 
-            <!-- Vault List Container -->
             <div id="vault-list" class="flex-1 overflow-y-auto space-y-2 pr-0.5"></div>
         </div>
     </div>
@@ -697,9 +701,9 @@
         };
     </script>
 
-    <!-- UI & Cloud Storage Engine Logic -->
+    <!-- UI Logic & Modals -->
     <script>
-        const titles = { memo: '純粋メモ帳', converter: 'ファイル変換', image: '画像加工', code: 'コード生成', saved: 'クラウドストレージ' };
+        const titles = { memo: 'メモ帳', converter: 'ファイル変換', image: '画像加工', code: 'コード生成' };
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -715,12 +719,28 @@
 
             document.getElementById('header-title').innerText = titles[tabId];
             if (tabId === 'code') generateCode();
-            if (tabId === 'saved') renderSavedAssets();
         }
 
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
         function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+        function openStorageModal() {
+            document.getElementById('storage-modal').classList.remove('hidden');
+            renderSavedAssets();
+        }
+        function closeStorageModal() {
+            document.getElementById('storage-modal').classList.add('hidden');
+        }
+
+        function openVaultModal() {
+            document.getElementById('vault-modal').classList.remove('hidden');
+            renderVault();
+        }
+        function closeVaultModal() {
+            document.getElementById('vault-modal').classList.add('hidden');
+            closeAddVaultItemForm();
+        }
 
         function toggleCustomExt(section) {
             const select = document.getElementById(`${section}-export-ext`) || document.getElementById(`${section}-ext`);
@@ -817,10 +837,10 @@
 
             if (ext === 'json') {
                 try {
-                    content = JSON.stringify({ title, content }, null, 2);
+                    content = JSON.stringify(JSON.parse(content), null, 2);
                 } catch(e){}
-            } else if (ext === 'html') {
-                content = `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>\n<body>\n<h1>${escapeHtml(title)}</h1>\n<pre>${escapeHtml(content)}</pre>\n</body>\n</html>`;
+            } else if (ext === 'html' && !content.trim().startsWith('<')) {
+                content = `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>${title}</title></head>\n<body>\n<h1>${title}</h1>\n<pre>${content}</pre>\n</body>\n</html>`;
             }
 
             const cleanFilename = title.endsWith(`.${ext}`) ? title : `${title}.${ext}`;
@@ -860,27 +880,12 @@
             downloadBlob(text, cleanFilename, getMimeTypeByExt(ext));
         }
 
-        // --- 3. KEY VAULT LOGIC (SEARCH, GROUPS, TAGS) ---
+        // --- 3. KEY VAULT LOGIC ---
         window.vaultItems = JSON.parse(localStorage.getItem(getKey('app_vault_items')) || '[]');
         let currentVaultGroup = 'all';
 
-        function openVaultModal() {
-            document.getElementById('vault-modal').classList.remove('hidden');
-            renderVault();
-        }
-
-        function closeVaultModal() {
-            document.getElementById('vault-modal').classList.add('hidden');
-            closeAddVaultItemForm();
-        }
-
-        function openAddVaultItemForm() {
-            document.getElementById('vault-add-form').classList.remove('hidden');
-        }
-
-        function closeAddVaultItemForm() {
-            document.getElementById('vault-add-form').classList.add('hidden');
-        }
+        function openAddVaultItemForm() { document.getElementById('vault-add-form').classList.remove('hidden'); }
+        function closeAddVaultItemForm() { document.getElementById('vault-add-form').classList.add('hidden'); }
 
         function setVaultGroup(group) {
             currentVaultGroup = group;
@@ -958,11 +963,7 @@
             renderVault();
         }
 
-        function toggleVaultMask(index) { 
-            window.vaultItems[index].masked = !window.vaultItems[index].masked; 
-            renderVault(); 
-        }
-
+        function toggleVaultMask(index) { window.vaultItems[index].masked = !window.vaultItems[index].masked; renderVault(); }
         function deleteVaultItem(index) { 
             if (confirm('削除しますか？')) { 
                 window.vaultItems.splice(index, 1); 
@@ -1268,11 +1269,10 @@
             }
         }
 
-        // --- 6. ADVANCED CLOUD STORAGE SYSTEM (GROUPS, TAGS, SEARCH) ---
+        // --- 6. CLOUD STORAGE SYSTEM ---
         window.savedAssets = JSON.parse(localStorage.getItem(getKey('app_saved_assets')) || '[]');
         let currentStorageGroup = 'all';
         let currentSelectedTag = null;
-
         let pendingSaveData = null;
 
         function openSaveModal(source) {
@@ -1358,8 +1358,11 @@
                 b.classList.remove('bg-indigo-600', 'text-white');
                 b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
             });
-            document.getElementById(`group-btn-${group}`).classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
-            document.getElementById(`group-btn-${group}`).classList.add('bg-indigo-600', 'text-white');
+            const btn = document.getElementById(`group-btn-${group}`);
+            if (btn) {
+                btn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+                btn.classList.add('bg-indigo-600', 'text-white');
+            }
             renderSavedAssets();
         }
 
@@ -1372,7 +1375,7 @@
             const container = document.getElementById('saved-assets-list');
             const tagsContainer = document.getElementById('storage-tags-filter');
             const countEl = document.getElementById('saved-assets-count');
-            const searchQuery = document.getElementById('storage-search-input').value.toLowerCase();
+            const searchQuery = (document.getElementById('storage-search-input')?.value || '').toLowerCase();
 
             container.innerHTML = '';
             tagsContainer.innerHTML = '';
