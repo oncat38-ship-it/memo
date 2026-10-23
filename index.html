@@ -710,6 +710,22 @@
             return select.value;
         }
 
+        function getMimeTypeByExt(ext) {
+            const mimeTypes = {
+                'txt': 'text/plain;charset=utf-8',
+                'json': 'application/json;charset=utf-8',
+                'csv': 'text/csv;charset=utf-8',
+                'md': 'text/markdown;charset=utf-8',
+                'html': 'text/html;charset=utf-8',
+                'xml': 'application/xml;charset=utf-8',
+                'yaml': 'text/yaml;charset=utf-8',
+                'tsv': 'text/tab-separated-values;charset=utf-8',
+                'sql': 'application/sql;charset=utf-8',
+                'log': 'text/plain;charset=utf-8'
+            };
+            return mimeTypes[ext.toLowerCase()] || 'application/octet-stream;charset=utf-8';
+        }
+
         function validateAuthInputs() {
             const id = document.getElementById('auth-userid').value.trim();
             const pass = document.getElementById('auth-password').value;
@@ -768,10 +784,16 @@
             const ext = getSelectedExt('memo');
             let content = memoContent.value;
 
-            if (ext === 'json') content = JSON.stringify({ title, content }, null, 2);
-            else if (ext === 'html') content = `<!DOCTYPE html><html><body><h1>${title}</h1><pre>${content}</pre></body></html>`;
+            if (ext === 'json') {
+                try {
+                    content = JSON.stringify({ title, content }, null, 2);
+                } catch(e){}
+            } else if (ext === 'html') {
+                content = `<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>${escapeHtml(title)}</title></head>\n<body>\n<h1>${escapeHtml(title)}</h1>\n<pre>${escapeHtml(content)}</pre>\n</body>\n</html>`;
+            }
 
-            downloadBlob(content, `${title}.${ext}`, 'text/plain;charset=utf-8');
+            const cleanFilename = title.endsWith(`.${ext}`) ? title : `${title}.${ext}`;
+            downloadBlob(content, cleanFilename, getMimeTypeByExt(ext));
         }
 
         // --- 2. CONVERTER LOGIC ---
@@ -798,11 +820,13 @@
 
         function downloadConvertedFile() {
             const text = document.getElementById('converter-output').value;
-            const name = document.getElementById('converter-filename').value || 'file';
+            const name = document.getElementById('converter-filename').value.trim() || 'converted';
             const ext = getSelectedExt('converter');
 
             if (!text) return alert('出力データがありません');
-            downloadBlob(text, `${name}.${ext}`, 'text/plain;charset=utf-8');
+
+            const cleanFilename = name.endsWith(`.${ext}`) ? name : `${name}.${ext}`;
+            downloadBlob(text, cleanFilename, getMimeTypeByExt(ext));
         }
 
         // --- 3. VAULT LOGIC ---
@@ -909,11 +933,12 @@
             canvas.height = h;
             canvas.getContext('2d').drawImage(currentLoadedImage, 0, 0, w, h);
 
+            const ext = format.split('/')[1] || 'png';
             canvas.toBlob((blob) => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `image.${format.split('/')[1]}`;
+                a.download = `processed_image.${ext}`;
                 a.click();
                 URL.revokeObjectURL(url);
             }, format);
@@ -1177,16 +1202,20 @@
             const groupSelect = document.getElementById('save-modal-group');
 
             if (source === 'memo') {
-                titleInput.value = memoTitle.value.trim() || '無題メモ';
+                const ext = getSelectedExt('memo');
+                titleInput.value = memoTitle.value.trim() || `無題メモ.${ext}`;
                 groupSelect.value = 'memo';
             } else if (source === 'converter') {
-                titleInput.value = document.getElementById('converter-filename').value || '変換データ';
+                const ext = getSelectedExt('converter');
+                titleInput.value = document.getElementById('converter-filename').value.trim() || `変換データ.${ext}`;
                 groupSelect.value = 'text';
             } else if (source === 'image') {
-                titleInput.value = '加工画像';
+                const format = document.getElementById('img-format').value;
+                const ext = format.split('/')[1] || 'png';
+                titleInput.value = `加工画像.${ext}`;
                 groupSelect.value = 'media';
             } else if (source === 'code') {
-                titleInput.value = '生成コード';
+                titleInput.value = '生成コード.png';
                 groupSelect.value = 'media';
             }
 
@@ -1200,29 +1229,38 @@
         }
 
         function confirmSaveToApp() {
-            const title = document.getElementById('save-modal-title').value.trim() || '無題アイテム';
+            const rawTitle = document.getElementById('save-modal-title').value.trim() || '無題アイテム';
             const group = document.getElementById('save-modal-group').value;
             const rawTags = document.getElementById('save-modal-tags').value;
             const tags = rawTags ? rawTags.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
 
-            let newItem = { type: group, title, tags, date: new Date().toLocaleDateString() };
+            let newItem = { type: group, tags, date: new Date().toLocaleDateString() };
 
             if (pendingSaveData === 'memo') {
+                const ext = getSelectedExt('memo');
+                newItem.ext = ext;
+                newItem.title = rawTitle.endsWith(`.${ext}`) ? rawTitle : `${rawTitle}.${ext}`;
                 newItem.content = memoContent.value;
-                newItem.ext = getSelectedExt('memo');
             } else if (pendingSaveData === 'converter') {
+                const ext = getSelectedExt('converter');
+                newItem.ext = ext;
+                newItem.title = rawTitle.endsWith(`.${ext}`) ? rawTitle : `${rawTitle}.${ext}`;
                 newItem.content = document.getElementById('converter-output').value;
-                newItem.ext = getSelectedExt('converter');
             } else if (pendingSaveData === 'image') {
                 const canvas = document.createElement('canvas');
                 const w = parseInt(document.getElementById('img-width').value);
                 const h = parseInt(document.getElementById('img-height').value);
                 const format = document.getElementById('img-format').value;
+                const ext = format.split('/')[1] || 'png';
                 canvas.width = w; canvas.height = h;
                 canvas.getContext('2d').drawImage(currentLoadedImage, 0, 0, w, h);
+                newItem.ext = ext;
+                newItem.title = rawTitle.endsWith(`.${ext}`) ? rawTitle : `${rawTitle}.${ext}`;
                 newItem.data = canvas.toDataURL(format);
             } else if (pendingSaveData === 'code') {
                 const canvas = document.getElementById('code-canvas');
+                newItem.ext = 'png';
+                newItem.title = rawTitle.endsWith('.png') ? rawTitle : `${rawTitle}.png`;
                 newItem.data = canvas.toDataURL('image/png');
             }
 
@@ -1259,7 +1297,6 @@
             container.innerHTML = '';
             tagsContainer.innerHTML = '';
 
-            // Extract all unique tags
             const allTags = [...new Set(window.savedAssets.flatMap(item => item.tags || []))];
             
             if (allTags.length > 0) {
@@ -1275,7 +1312,6 @@
                 tagsContainer.innerHTML = `<span class="text-[10px] text-slate-400">タグ未設定</span>`;
             }
 
-            // Filter items
             const filtered = window.savedAssets.filter(item => {
                 const matchesGroup = currentStorageGroup === 'all' || item.type === currentStorageGroup;
                 const matchesTag = !currentSelectedTag || (item.tags && item.tags.includes(currentSelectedTag));
@@ -1310,12 +1346,13 @@
                                 </div>
                             </div>
                             <div class="flex items-center space-x-1">
-                                <a href="${item.data}" download="saved_image.png" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg"><i data-lucide="download" class="w-3.5 h-3.5"></i></a>
+                                <a href="${item.data}" download="${escapeHtml(item.title)}" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg"><i data-lucide="download" class="w-3.5 h-3.5"></i></a>
                                 <button onclick="deleteSavedAsset(${index})" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
                     `;
                 } else {
+                    const itemExt = item.ext || 'txt';
                     card.innerHTML = `
                         <div class="flex items-center justify-between">
                             <div>
@@ -1327,7 +1364,7 @@
                             </div>
                             <div class="flex items-center space-x-1">
                                 <button onclick="copyToClipboard('${escapeJs(item.content)}')" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
-                                <button onclick="downloadBlob('${escapeJs(item.content)}', '${escapeJs(item.title)}', 'text/plain;charset=utf-8')" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg"><i data-lucide="download" class="w-3.5 h-3.5"></i></button>
+                                <button onclick="downloadStorageTextItem('${escapeJs(item.content)}', '${escapeJs(item.title)}', '${escapeJs(itemExt)}')" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg"><i data-lucide="download" class="w-3.5 h-3.5"></i></button>
                                 <button onclick="deleteSavedAsset(${index})" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
@@ -1337,6 +1374,11 @@
                 container.appendChild(card);
             });
             lucide.createIcons();
+        }
+
+        function downloadStorageTextItem(content, title, ext) {
+            const cleanFilename = title.endsWith(`.${ext}`) ? title : `${title}.${ext}`;
+            downloadBlob(content, cleanFilename, getMimeTypeByExt(ext));
         }
 
         function deleteSavedAsset(index) {
