@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>マルチ機能 ユーティリティ App</title>
+    <title>クラウドストレージ風 ユーティリティ App</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -36,7 +36,7 @@
     <header class="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex justify-between items-center">
         <div class="flex items-center space-x-1.5">
             <div class="p-1 bg-indigo-600 text-white rounded-md">
-                <i data-lucide="smartphone" class="w-4 h-4"></i>
+                <i data-lucide="cloud" class="w-4 h-4"></i>
             </div>
             <h1 class="font-bold text-sm tracking-tight" id="header-title">メモ帳</h1>
         </div>
@@ -72,7 +72,6 @@
                     </button>
                 </div>
 
-                <!-- Extension & Export Toolbar -->
                 <div class="space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-2">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">保存・出力形式の選択</span>
                     <div class="flex items-center space-x-1.5">
@@ -91,9 +90,9 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-1.5 pt-1">
-                        <button onclick="saveMemoToApp()" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-[11px] font-semibold py-1.5 rounded-lg flex items-center justify-center space-x-1 active:scale-95 transition">
+                        <button onclick="openSaveModal('memo')" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-[11px] font-semibold py-1.5 rounded-lg flex items-center justify-center space-x-1 active:scale-95 transition">
                             <i data-lucide="bookmark" class="w-3 h-3"></i>
-                            <span>アプリ内保存</span>
+                            <span>ストレージ保存</span>
                         </button>
                         <button onclick="downloadMemo()" class="bg-indigo-600 text-white text-[11px] font-semibold py-1.5 rounded-lg shadow-sm flex items-center justify-center space-x-1 active:scale-95 transition">
                             <i data-lucide="download" class="w-3 h-3"></i>
@@ -167,9 +166,9 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-1.5 pt-1">
-                        <button onclick="saveConvertedToApp()" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-1.5 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition">
+                        <button onclick="openSaveModal('converter')" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-1.5 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition">
                             <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-                            <span>アプリ内保存</span>
+                            <span>ストレージ保存</span>
                         </button>
                         <button onclick="downloadConvertedFile()" class="bg-indigo-600 text-white py-1.5 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition">
                             <i data-lucide="download" class="w-3.5 h-3.5"></i>
@@ -231,9 +230,9 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-1.5 pt-1">
-                    <button onclick="saveProcessedImageToApp()" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-2 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition">
+                    <button onclick="openSaveModal('image')" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-2 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition">
                         <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-                        <span>アプリ内保存</span>
+                        <span>ストレージ保存</span>
                     </button>
                     <button onclick="processAndDownloadImage()" class="bg-indigo-600 text-white py-2 rounded-lg font-semibold text-[11px] shadow-sm flex items-center justify-center space-x-1 active:scale-95 transition">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>
@@ -243,7 +242,7 @@
             </div>
         </section>
 
-        <!-- 5. CODE / QR TAB (PRO AD DESIGN) -->
+        <!-- 5. CODE / QR TAB -->
         <section id="tab-code" class="tab-content hidden space-y-3">
             <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 shadow-sm space-y-3">
                 <div class="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
@@ -333,9 +332,9 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-1.5">
-                    <button onclick="saveGeneratedCodeToApp()" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-2 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition">
+                    <button onclick="openSaveModal('code')" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 py-2 rounded-lg font-semibold text-[11px] flex items-center justify-center space-x-1 active:scale-95 transition">
                         <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-                        <span>アプリ内保存</span>
+                        <span>ストレージ保存</span>
                     </button>
                     <button onclick="downloadCodeImage()" class="bg-indigo-600 text-white py-2 rounded-lg font-semibold text-[11px] shadow-sm flex items-center justify-center space-x-1 active:scale-95 transition">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i>
@@ -345,11 +344,32 @@
             </div>
         </section>
 
-        <!-- 6. SAVED ASSETS TAB -->
+        <!-- 6. CLOUD STORAGE TAB (SEARCH, GROUPS, TAGS) -->
         <section id="tab-saved" class="tab-content hidden space-y-3">
-            <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <span class="font-bold text-xs">アプリ内統合保存データ</span>
-                <span id="saved-assets-count" class="text-[10px] bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold">0 件</span>
+            <div class="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5">
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-xs">クラウドストレージ</span>
+                    <span id="saved-assets-count" class="text-[10px] bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold">0 件</span>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                    <input type="text" id="storage-search-input" placeholder="タイトルや内容で検索..." oninput="renderSavedAssets()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] pl-8 pr-3 py-1.5 focus:outline-none">
+                </div>
+
+                <!-- Category / Group Filter Tabs -->
+                <div class="flex space-x-1 overflow-x-auto no-scrollbar pb-1 text-[11px]">
+                    <button onclick="setStorageGroup('all')" id="group-btn-all" class="group-filter-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold whitespace-nowrap">すべて</button>
+                    <button onclick="setStorageGroup('memo')" id="group-btn-memo" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">メモ</button>
+                    <button onclick="setStorageGroup('text')" id="group-btn-text" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">テキスト・変換</button>
+                    <button onclick="setStorageGroup('media')" id="group-btn-media" class="group-filter-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap">画像・QR</button>
+                </div>
+
+                <!-- Tag Cloud Container -->
+                <div id="storage-tags-filter" class="flex flex-wrap gap-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <!-- Dynamic tag chips -->
+                </div>
             </div>
 
             <div id="saved-assets-list" class="space-y-2"></div>
@@ -381,11 +401,47 @@
                 <span class="text-[9px] mt-0.5 font-medium">コード</span>
             </button>
             <button onclick="switchTab('saved')" id="nav-saved" class="nav-btn flex flex-col items-center justify-center py-1 rounded-lg text-slate-400">
-                <i data-lucide="folder-heart" class="w-4 h-4"></i>
-                <span class="text-[9px] mt-0.5 font-medium">保存物</span>
+                <i data-lucide="cloud" class="w-4 h-4"></i>
+                <span class="text-[9px] mt-0.5 font-medium">ストレージ</span>
             </button>
         </div>
     </nav>
+
+    <!-- Save Meta Modal (Group & Tags Setup) -->
+    <div id="save-meta-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 p-4 w-full max-w-md shadow-2xl space-y-3">
+            <h3 class="text-sm font-bold flex items-center space-x-1.5">
+                <i data-lucide="bookmark-plus" class="w-4 h-4 text-indigo-600"></i>
+                <span>クラウドストレージへ保存</span>
+            </h3>
+            
+            <div class="space-y-2.5">
+                <div>
+                    <span class="text-[9px] text-slate-400 block mb-0.5">ファイル名 / タイトル</span>
+                    <input type="text" id="save-modal-title" placeholder="タイトルを入力..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 focus:outline-none">
+                </div>
+
+                <div>
+                    <span class="text-[9px] text-slate-400 block mb-0.5">グループ (カテゴリ)</span>
+                    <select id="save-modal-group" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 font-medium">
+                        <option value="memo">メモ</option>
+                        <option value="text">テキスト・変換</option>
+                        <option value="media">画像・QR</option>
+                    </select>
+                </div>
+
+                <div>
+                    <span class="text-[9px] text-slate-400 block mb-0.5">タグ (カンマ区切り、例: 仕事, API, 重要)</span>
+                    <input type="text" id="save-modal-tags" placeholder="タグ1, タグ2" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs p-2.5 focus:outline-none">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button onclick="closeSaveModal()" class="py-2.5 text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl">キャンセル</button>
+                <button onclick="confirmSaveToApp()" class="py-2.5 text-xs font-semibold bg-indigo-600 text-white rounded-xl shadow-md">保存を実行</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Auth Modal -->
     <div id="auth-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center">
@@ -610,9 +666,9 @@
         };
     </script>
 
-    <!-- UI & QR Custom Engine Logic -->
+    <!-- UI & Cloud Storage Engine Logic -->
     <script>
-        const titles = { memo: '純粋メモ帳', converter: 'ファイル変換', vault: 'キー保管庫', image: '画像加工', code: 'コード生成', saved: 'アプリ内保存物' };
+        const titles = { memo: '純粋メモ帳', converter: 'ファイル変換', vault: 'キー保管庫', image: '画像加工', code: 'コード生成', saved: 'クラウドストレージ' };
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -718,21 +774,6 @@
             downloadBlob(content, `${title}.${ext}`, 'text/plain;charset=utf-8');
         }
 
-        function saveMemoToApp() {
-            const title = memoTitle.value.trim() || '無題メモ';
-            const content = memoContent.value;
-            const ext = getSelectedExt('memo');
-
-            if (!content) return alert('メモ内容が空です');
-
-            saveAssetToApp({
-                type: 'text',
-                title: `${title} (.${ext})`,
-                content: content,
-                date: new Date().toLocaleDateString()
-            });
-        }
-
         // --- 2. CONVERTER LOGIC ---
         function handleFileUpload(e) {
             const file = e.target.files[0];
@@ -762,21 +803,6 @@
 
             if (!text) return alert('出力データがありません');
             downloadBlob(text, `${name}.${ext}`, 'text/plain;charset=utf-8');
-        }
-
-        function saveConvertedToApp() {
-            const text = document.getElementById('converter-output').value;
-            const name = document.getElementById('converter-filename').value || '変換結果';
-            const ext = getSelectedExt('converter');
-
-            if (!text) return alert('出力データがありません');
-
-            saveAssetToApp({
-                type: 'text',
-                title: `${name} (.${ext})`,
-                content: text,
-                date: new Date().toLocaleDateString()
-            });
         }
 
         // --- 3. VAULT LOGIC ---
@@ -893,23 +919,7 @@
             }, format);
         }
 
-        function saveProcessedImageToApp() {
-            if (!currentLoadedImage) return alert('画像を選択してください');
-
-            const canvas = document.createElement('canvas');
-            const w = parseInt(document.getElementById('img-width').value);
-            const h = parseInt(document.getElementById('img-height').value);
-            const format = document.getElementById('img-format').value;
-
-            canvas.width = w;
-            canvas.height = h;
-            canvas.getContext('2d').drawImage(currentLoadedImage, 0, 0, w, h);
-
-            const dataUrl = canvas.toDataURL(format);
-            saveAssetToApp({ type: 'media', data: dataUrl, title: `加工画像 (${w}x${h})`, date: new Date().toLocaleDateString() });
-        }
-
-        // --- 5. HIGH-END QR / BARCODE ENGINE ---
+        // --- 5. CODE / QR LOGIC ---
         let currentCodeType = 'qr';
         let overlayLogoImage = null;
 
@@ -952,9 +962,9 @@
         }
 
         function isFinderEye(r, c, count) {
-            if (r < 7 && c < 7) return true; // Top-Left Eye
-            if (r < 7 && c >= count - 7) return true; // Top-Right Eye
-            if (r >= count - 7 && c < 7) return true; // Bottom-Left Eye
+            if (r < 7 && c < 7) return true;
+            if (r < 7 && c >= count - 7) return true;
+            if (r >= count - 7 && c < 7) return true;
             return false;
         }
 
@@ -977,7 +987,7 @@
                 const useGradient = document.getElementById('qr-use-gradient').checked;
 
                 try {
-                    const qr = qrcode(0, 'H'); // High Error Correction
+                    const qr = qrcode(0, 'H');
                     qr.addData(text);
                     qr.make();
 
@@ -993,7 +1003,6 @@
                     ctx.fillStyle = bgColor;
                     ctx.fillRect(0, 0, size, size);
 
-                    // Color Setup
                     let bodyFillStyle = fgColor;
                     if (useGradient) {
                         const grad = ctx.createLinearGradient(0, 0, size, size);
@@ -1002,43 +1011,34 @@
                         bodyFillStyle = grad;
                     }
 
-                    // Render Data Modules (Excluding Eyes)
                     for (let r = 0; r < count; r++) {
                         for (let c = 0; c < count; c++) {
                             if (qr.isDark(r, c) && !isFinderEye(r, c, count)) {
                                 const x = c * cellSize + margin;
                                 const y = r * cellSize + margin;
                                 ctx.fillStyle = bodyFillStyle;
-
                                 drawCustomDot(ctx, x, y, cellSize, dotStyle);
                             }
                         }
                     }
 
-                    // Render Custom Eyes (Finder Patterns)
                     drawEyePattern(ctx, margin, margin, cellSize, eyeColor);
                     drawEyePattern(ctx, (count - 7) * cellSize + margin, margin, cellSize, eyeColor);
                     drawEyePattern(ctx, margin, (count - 7) * cellSize + margin, cellSize, eyeColor);
 
-                    // Render Logo Overlay if Loaded
                     if (overlayLogoImage) {
                         const logoSize = size * 0.22;
                         const logoX = (size - logoSize) / 2;
                         const logoY = (size - logoSize) / 2;
 
-                        // Logo Background Shield
                         ctx.fillStyle = bgColor;
                         ctx.beginPath();
                         ctx.roundRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8, 8);
                         ctx.fill();
 
-                        // Logo Image Draw
                         ctx.drawImage(overlayLogoImage, logoX, logoY, logoSize, logoSize);
                     }
-
-                } catch (e) {
-                    console.error("QR Generation error:", e);
-                }
+                } catch (e) {}
             } else {
                 canvas.classList.add('hidden');
                 svg.classList.remove('hidden');
@@ -1054,7 +1054,6 @@
             }
         }
 
-        // Custom Dot Renderer
         function drawCustomDot(ctx, x, y, s, style) {
             ctx.beginPath();
             if (style === 'dots') {
@@ -1097,22 +1096,17 @@
             }
         }
 
-        // Custom Eye Pattern Renderer
         function drawEyePattern(ctx, x, y, cellSize, color) {
             ctx.fillStyle = color;
-
-            // Outer Frame (7x7)
             ctx.beginPath();
             ctx.roundRect(x, y, 7 * cellSize, 7 * cellSize, cellSize * 1.5);
             ctx.fill();
 
-            // Inner Cutout
             ctx.fillStyle = document.getElementById('qr-bg-color').value;
             ctx.beginPath();
             ctx.roundRect(x + cellSize, y + cellSize, 5 * cellSize, 5 * cellSize, cellSize);
             ctx.fill();
 
-            // Center Dot (3x3)
             ctx.fillStyle = color;
             ctx.beginPath();
             ctx.roundRect(x + 2 * cellSize, y + 2 * cellSize, 3 * cellSize, 3 * cellSize, cellSize * 0.8);
@@ -1169,38 +1163,138 @@
             }
         }
 
-        function saveGeneratedCodeToApp() {
-            const canvas = document.getElementById('code-canvas');
-            const dataUrl = canvas.toDataURL('image/png');
-            const text = document.getElementById('code-text').value.trim() || 'https://example.com';
+        // --- 6. ADVANCED CLOUD STORAGE SYSTEM (GROUPS, TAGS, SEARCH) ---
+        window.savedAssets = JSON.parse(localStorage.getItem(getKey('app_saved_assets')) || '[]');
+        let currentStorageGroup = 'all';
+        let currentSelectedTag = null;
 
-            saveAssetToApp({ type: 'media', data: dataUrl, title: `コード: ${text.slice(0, 15)}...`, date: new Date().toLocaleDateString() });
+        let pendingSaveData = null;
+
+        function openSaveModal(source) {
+            pendingSaveData = source;
+            const modal = document.getElementById('save-meta-modal');
+            const titleInput = document.getElementById('save-modal-title');
+            const groupSelect = document.getElementById('save-modal-group');
+
+            if (source === 'memo') {
+                titleInput.value = memoTitle.value.trim() || '無題メモ';
+                groupSelect.value = 'memo';
+            } else if (source === 'converter') {
+                titleInput.value = document.getElementById('converter-filename').value || '変換データ';
+                groupSelect.value = 'text';
+            } else if (source === 'image') {
+                titleInput.value = '加工画像';
+                groupSelect.value = 'media';
+            } else if (source === 'code') {
+                titleInput.value = '生成コード';
+                groupSelect.value = 'media';
+            }
+
+            document.getElementById('save-modal-tags').value = '';
+            modal.classList.remove('hidden');
         }
 
-        // --- 6. UNIFIED IN-APP STORAGE SYSTEM ---
-        window.savedAssets = JSON.parse(localStorage.getItem(getKey('app_saved_assets')) || '[]');
+        function closeSaveModal() {
+            document.getElementById('save-meta-modal').classList.add('hidden');
+            pendingSaveData = null;
+        }
 
-        function saveAssetToApp(item) {
-            window.savedAssets.push(item);
+        function confirmSaveToApp() {
+            const title = document.getElementById('save-modal-title').value.trim() || '無題アイテム';
+            const group = document.getElementById('save-modal-group').value;
+            const rawTags = document.getElementById('save-modal-tags').value;
+            const tags = rawTags ? rawTags.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
+
+            let newItem = { type: group, title, tags, date: new Date().toLocaleDateString() };
+
+            if (pendingSaveData === 'memo') {
+                newItem.content = memoContent.value;
+                newItem.ext = getSelectedExt('memo');
+            } else if (pendingSaveData === 'converter') {
+                newItem.content = document.getElementById('converter-output').value;
+                newItem.ext = getSelectedExt('converter');
+            } else if (pendingSaveData === 'image') {
+                const canvas = document.createElement('canvas');
+                const w = parseInt(document.getElementById('img-width').value);
+                const h = parseInt(document.getElementById('img-height').value);
+                const format = document.getElementById('img-format').value;
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(currentLoadedImage, 0, 0, w, h);
+                newItem.data = canvas.toDataURL(format);
+            } else if (pendingSaveData === 'code') {
+                const canvas = document.getElementById('code-canvas');
+                newItem.data = canvas.toDataURL('image/png');
+            }
+
+            window.savedAssets.push(newItem);
             localStorage.setItem(getKey('app_saved_assets'), JSON.stringify(window.savedAssets));
             if (window.saveToCloud) window.saveToCloud();
-            alert('アプリ内に保存しました！');
+
+            closeSaveModal();
+            alert('クラウドストレージに保存しました！');
+        }
+
+        function setStorageGroup(group) {
+            currentStorageGroup = group;
+            document.querySelectorAll('.group-filter-btn').forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white');
+                b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+            });
+            document.getElementById(`group-btn-${group}`).classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+            document.getElementById(`group-btn-${group}`).classList.add('bg-indigo-600', 'text-white');
+            renderSavedAssets();
+        }
+
+        function filterByTag(tag) {
+            currentSelectedTag = currentSelectedTag === tag ? null : tag;
+            renderSavedAssets();
         }
 
         function renderSavedAssets() {
             const container = document.getElementById('saved-assets-list');
+            const tagsContainer = document.getElementById('storage-tags-filter');
             const countEl = document.getElementById('saved-assets-count');
-            container.innerHTML = '';
-            countEl.innerText = `${window.savedAssets.length} 件`;
+            const searchQuery = document.getElementById('storage-search-input').value.toLowerCase();
 
-            if (window.savedAssets.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">アプリ内保存データはありません</div>`;
+            container.innerHTML = '';
+            tagsContainer.innerHTML = '';
+
+            // Extract all unique tags
+            const allTags = [...new Set(window.savedAssets.flatMap(item => item.tags || []))];
+            
+            if (allTags.length > 0) {
+                allTags.forEach(tag => {
+                    const active = currentSelectedTag === tag;
+                    const chip = document.createElement('button');
+                    chip.className = `px-2 py-0.5 rounded-md text-[10px] font-medium transition ${active ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200'}`;
+                    chip.innerText = `#${tag}`;
+                    chip.onclick = () => filterByTag(tag);
+                    tagsContainer.appendChild(chip);
+                });
+            } else {
+                tagsContainer.innerHTML = `<span class="text-[10px] text-slate-400">タグ未設定</span>`;
+            }
+
+            // Filter items
+            const filtered = window.savedAssets.filter(item => {
+                const matchesGroup = currentStorageGroup === 'all' || item.type === currentStorageGroup;
+                const matchesTag = !currentSelectedTag || (item.tags && item.tags.includes(currentSelectedTag));
+                const matchesSearch = !searchQuery || item.title.toLowerCase().includes(searchQuery) || (item.content && item.content.toLowerCase().includes(searchQuery));
+                return matchesGroup && matchesTag && matchesSearch;
+            });
+
+            countEl.innerText = `${filtered.length} 件`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">該当する保存データはありません</div>`;
                 return;
             }
 
-            window.savedAssets.forEach((item, index) => {
+            filtered.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = "bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2.5 shadow-sm space-y-2";
+
+                const tagsHtml = (item.tags || []).map(t => `<span class="bg-slate-100 dark:bg-slate-800 text-[9px] px-1.5 py-0.5 rounded text-indigo-500 font-medium">#${escapeHtml(t)}</span>`).join(' ');
 
                 if (item.type === 'media') {
                     card.innerHTML = `
@@ -1209,7 +1303,10 @@
                                 <img src="${item.data}" class="w-10 h-10 object-contain rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                                 <div>
                                     <h4 class="font-bold text-xs max-w-[150px] truncate">${escapeHtml(item.title)}</h4>
-                                    <span class="text-[10px] text-slate-400">${item.date}</span>
+                                    <div class="flex items-center space-x-1 mt-0.5">
+                                        <span class="text-[10px] text-slate-400">${item.date}</span>
+                                        ${tagsHtml}
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-1">
@@ -1223,7 +1320,10 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <h4 class="font-bold text-xs max-w-[180px] truncate">${escapeHtml(item.title)}</h4>
-                                <span class="text-[10px] text-slate-400">${item.date}</span>
+                                <div class="flex items-center space-x-1 mt-0.5">
+                                    <span class="text-[10px] text-slate-400">${item.date}</span>
+                                    ${tagsHtml}
+                                </div>
                             </div>
                             <div class="flex items-center space-x-1">
                                 <button onclick="copyToClipboard('${escapeJs(item.content)}')" class="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 rounded-lg"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
